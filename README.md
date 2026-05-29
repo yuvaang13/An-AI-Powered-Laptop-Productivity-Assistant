@@ -24,7 +24,7 @@ A futuristic, on-device AI productivity assistant for macOS that helps you stay 
 
 1. Clone this repository:
 ```bash
-git clone https://github.com/YOUR_USERNAME/An-AI-Powered-Laptop-Productivity-Assistant.git
+git clone https://github.com/yuvaang13/An-AI-Powered-Laptop-Productivity-Assistant.git
 cd An-AI-Powered-Laptop-Productivity-Assistant
 ```
 
