@@ -9,6 +9,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var decisionEngine: DecisionEngine!
     
     func applicationDidFinishLaunching(_ notification: Notification) {
+        print("🚀 MindGate: Application launched")
+        
         // Initialize managers
         accessibilityManager = AccessibilityManager()
         windowManager = WindowManager()
@@ -20,7 +22,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         )
         
         // Check accessibility permissions
-        if !accessibilityManager.hasAccessibilityPermissions() {
+        let hasPermissions = accessibilityManager.hasAccessibilityPermissions()
+        print("🔐 Accessibility permissions: \(hasPermissions ? "✅ Granted" : "❌ Denied")")
+        
+        if !hasPermissions {
             showAccessibilityPrompt()
         } else {
             // Start monitoring

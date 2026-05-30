@@ -93,8 +93,10 @@ class WindowManager: ObservableObject {
     
     // MARK: - Orb Control
     func showOrb() {
+        print("🔮 Showing Orb...")
         positionOrbPanel()
         orbPanel?.orderFrontRegardless()
+        print("✅ Orb displayed")
     }
     
     func hideOrb() {

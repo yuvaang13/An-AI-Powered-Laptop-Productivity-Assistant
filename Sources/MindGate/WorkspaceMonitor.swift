@@ -14,6 +14,7 @@ class WorkspaceMonitor {
     }
     
     func startMonitoring() {
+        print("🔍 MindGate: Starting workspace monitoring...")
         observer = NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didActivateApplicationNotification,
             object: nil,
@@ -21,6 +22,7 @@ class WorkspaceMonitor {
         ) { [weak self] notification in
             self?.handleApplicationActivation(notification)
         }
+        print("✅ MindGate: Workspace monitoring started")
     }
     
     func stopMonitoring() {
@@ -35,9 +37,11 @@ class WorkspaceMonitor {
         }
         
         let appName = app.localizedName ?? ""
+        print("📱 App activated: \(appName)")
         
         // Check if app is distracting
         if Configuration.distractingApps.contains(appName) {
+            print("⚠️ Distracting app detected: \(appName)")
             Task { @MainActor in
                 self.windowManager?.showOrb()
                 self.decisionEngine?.setCurrentApp(app)
@@ -47,6 +51,7 @@ class WorkspaceMonitor {
         
         // Check if it's a browser with restricted content
         if Configuration.monitoredBrowsers.contains(appName) {
+            print("🌐 Browser detected: \(appName)")
             checkBrowserContent(app: app)
         }
     }
@@ -55,8 +60,10 @@ class WorkspaceMonitor {
         let windowTitle = accessibilityManager.getWindowTitle(for: app)
         
         if let title = windowTitle?.lowercased() {
+            print("🔍 Browser window title: \(title)")
             for keyword in Configuration.restrictedKeywords {
                 if title.contains(keyword) {
+                    print("⚠️ Restricted keyword detected: \(keyword)")
                     Task { @MainActor in
                         self.windowManager?.showOrb()
                         self.decisionEngine?.setCurrentApp(app)
@@ -64,6 +71,8 @@ class WorkspaceMonitor {
                     return
                 }
             }
+        } else {
+            print("⚠️ Could not get window title for browser")
         }
     }
     
