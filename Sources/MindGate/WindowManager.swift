@@ -14,6 +14,7 @@ class WindowManager: ObservableObject {
     private var orbHostingController: NSHostingController<OrbView>?
     private var overlayHostingController: NSHostingController<OverlayView>?
     private let decisionEngine: DecisionEngine
+    private let orbWindowLevel: NSWindow.Level = .screenSaver
 
     @Published var isOrbExpanded = false
     @Published var isOverlayVisible = false
@@ -38,8 +39,8 @@ class WindowManager: ObservableObject {
         )
 
         panel.isFloatingPanel = true
-        panel.level = .floating
-        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle]
+        panel.level = orbWindowLevel
+        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
         panel.backgroundColor = .clear
         panel.isOpaque = false
         panel.hasShadow = false
@@ -85,22 +86,21 @@ class WindowManager: ObservableObject {
 
     // MARK: - Positioning
     private func positionOrbPanel() {
-        guard let screen = NSScreen.main else { return }
+        guard let screen = targetScreen() else { return }
         let screenFrame = screen.visibleFrame
 
         let orbSize = isOrbExpanded ? Configuration.Dimensions.orbExpandedWidth : Configuration.Dimensions.orbSize
         let orbHeight = isOrbExpanded ? Configuration.Dimensions.orbExpandedHeight : Configuration.Dimensions.orbSize
 
-        let xOffset: CGFloat = isOrbExpanded ? 34 : 14
-        let yOffset: CGFloat = isOrbExpanded ? 22 : 14
+        let xOffset: CGFloat = isOrbExpanded ? 18 : 8
+        let yOffset: CGFloat = isOrbExpanded ? 12 : 8
         let x = screenFrame.maxX - orbSize + xOffset
         let y = screenFrame.maxY - orbHeight + yOffset
 
-        orbPanel?.setFrameOrigin(NSPoint(x: x, y: y))
-
         let contentSize = NSSize(width: orbSize, height: orbHeight)
+        let frame = NSRect(origin: NSPoint(x: x, y: y), size: contentSize)
 
-        orbPanel?.setContentSize(contentSize)
+        orbPanel?.setFrame(frame, display: true)
         applyOrbPanelShape(size: contentSize)
     }
 
@@ -112,10 +112,42 @@ class WindowManager: ObservableObject {
         guard let contentView = orbPanel?.contentView else { return }
 
         contentView.wantsLayer = true
+        contentView.frame = NSRect(origin: .zero, size: size)
         contentView.layer?.backgroundColor = NSColor.clear.cgColor
         contentView.layer?.cornerRadius = min(size.width, size.height) / 2
         contentView.layer?.cornerCurve = .continuous
         contentView.layer?.masksToBounds = true
+    }
+
+    private func targetScreen() -> NSScreen? {
+        let mouseLocation = NSEvent.mouseLocation
+
+        return NSScreen.screens.first { screen in
+            NSMouseInRect(mouseLocation, screen.frame, false)
+        } ?? NSScreen.main ?? NSScreen.screens.first
+    }
+
+    private func presentOrbPanel(_ panel: NSPanel) {
+        panel.level = orbWindowLevel
+        panel.alphaValue = 1
+        panel.ignoresMouseEvents = false
+        panel.setFrame(panel.frame, display: true)
+        panel.orderFrontRegardless()
+
+        NSApplication.shared.activate(ignoringOtherApps: true)
+        panel.makeKeyAndOrderFront(nil)
+        panel.orderFrontRegardless()
+        panel.displayIfNeeded()
+
+        let isOnAnyScreen = NSScreen.screens.contains { screen in
+            screen.frame.intersects(panel.frame)
+        }
+
+        if panel.isVisible && isOnAnyScreen {
+            print("✅ Orb visible at frame: \(panel.frame), level: \(panel.level.rawValue)")
+        } else {
+            print("❌ Orb presentation failed. isVisible=\(panel.isVisible), isOnAnyScreen=\(isOnAnyScreen), frame=\(panel.frame)")
+        }
     }
 
     // MARK: - Orb Control
@@ -130,12 +162,7 @@ class WindowManager: ObservableObject {
             return
         }
 
-        panel.level = .floating
-        NSApplication.shared.activate(ignoringOtherApps: true)
-        panel.makeKeyAndOrderFront(nil)
-
-        print("✅ Orb displayed at frame: \(panel.frame)")
-        print("📐 Screen frame: \(NSScreen.main?.frame ?? .zero)")
+        presentOrbPanel(panel)
     }
 
     func hideOrb() {
@@ -148,8 +175,10 @@ class WindowManager: ObservableObject {
         isOrbExpanded = true
         positionOrbPanel()
         refreshOrbView()
-        NSApplication.shared.activate(ignoringOtherApps: true)
-        orbPanel?.makeKeyAndOrderFront(nil)
+
+        if let orbPanel {
+            presentOrbPanel(orbPanel)
+        }
     }
 
     func collapseOrb() {
