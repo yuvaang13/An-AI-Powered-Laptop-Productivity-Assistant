@@ -42,8 +42,11 @@ class WindowManager: ObservableObject {
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle]
         panel.backgroundColor = .clear
         panel.isOpaque = false
-        panel.hasShadow = true
+        panel.hasShadow = false
         panel.hidesOnDeactivate = false
+        panel.becomesKeyOnlyIfNeeded = false
+        panel.acceptsMouseMovedEvents = true
+        panel.tabbingMode = .disallowed
         panel.contentView = orbHostingController?.view
         panel.contentView?.wantsLayer = true
         panel.contentView?.layer?.backgroundColor = NSColor.clear.cgColor
@@ -115,9 +118,8 @@ class WindowManager: ObservableObject {
         }
 
         panel.level = .floating
-        panel.orderFrontRegardless()
         NSApplication.shared.activate(ignoringOtherApps: true)
-        panel.makeKey()
+        panel.makeKeyAndOrderFront(nil)
 
         print("✅ Orb displayed at frame: \(panel.frame)")
         print("📐 Screen frame: \(NSScreen.main?.frame ?? .zero)")
@@ -133,9 +135,8 @@ class WindowManager: ObservableObject {
         isOrbExpanded = true
         positionOrbPanel()
         refreshOrbView()
-        orbPanel?.orderFrontRegardless()
         NSApplication.shared.activate(ignoringOtherApps: true)
-        orbPanel?.makeKey()
+        orbPanel?.makeKeyAndOrderFront(nil)
     }
 
     func collapseOrb() {

@@ -117,8 +117,8 @@ struct Configuration {
     
     struct Dimensions {
         static let orbSize: CGFloat = 60
-        static let orbExpandedWidth: CGFloat = 350
-        static let orbExpandedHeight: CGFloat = 400
-        static let chatCornerRadius: CGFloat = 16
+        static let orbExpandedWidth: CGFloat = 340
+        static let orbExpandedHeight: CGFloat = 280
+        static let chatCornerRadius: CGFloat = 14
     }
 }
