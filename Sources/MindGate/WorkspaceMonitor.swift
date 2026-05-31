@@ -57,13 +57,15 @@ class WorkspaceMonitor {
     }
     
     private func checkBrowserContent(app: NSRunningApplication) {
-        let windowTitle = accessibilityManager.getWindowTitle(for: app)
+        let windowTitles = accessibilityManager.getAllWindowTitles(for: app)
         
-        if let title = windowTitle?.lowercased() {
-            print("🔍 Browser window title: \(title)")
+        print("🔍 Browser window titles: \(windowTitles)")
+        
+        for title in windowTitles {
+            let lowercasedTitle = title.lowercased()
             for keyword in Configuration.restrictedKeywords {
-                if title.contains(keyword) {
-                    print("⚠️ Restricted keyword detected: \(keyword)")
+                if lowercasedTitle.contains(keyword) {
+                    print("⚠️ Restricted keyword detected: \(keyword) in title: \(title)")
                     Task { @MainActor in
                         self.windowManager?.showOrb()
                         self.decisionEngine?.setCurrentApp(app)
@@ -71,8 +73,10 @@ class WorkspaceMonitor {
                     return
                 }
             }
-        } else {
-            print("⚠️ Could not get window title for browser")
+        }
+        
+        if windowTitles.isEmpty {
+            print("⚠️ Could not get any window titles for browser")
         }
     }
     

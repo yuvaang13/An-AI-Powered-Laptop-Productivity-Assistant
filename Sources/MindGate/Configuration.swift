@@ -12,7 +12,6 @@ struct Configuration {
         "TikTok",
         "Instagram",
         "Facebook",
-        "Spotify",
         "Netflix",
         "YouTube",
         "Twitch"

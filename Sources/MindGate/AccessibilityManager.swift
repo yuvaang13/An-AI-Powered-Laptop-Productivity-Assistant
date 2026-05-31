@@ -36,4 +36,28 @@ class AccessibilityManager {
         
         return title
     }
+    
+    func getAllWindowTitles(for application: NSRunningApplication) -> [String] {
+        let appElement = AXUIElementCreateApplication(application.processIdentifier)
+        var windowsRef: AnyObject?
+        let result = AXUIElementCopyAttributeValue(appElement, kAXWindowsAttribute as CFString, &windowsRef)
+        
+        guard result == .success,
+              let windows = windowsRef as? [AXUIElement] else {
+            return []
+        }
+        
+        var titles: [String] = []
+        for window in windows {
+            var titleRef: AnyObject?
+            let titleResult = AXUIElementCopyAttributeValue(window, kAXTitleAttribute as CFString, &titleRef)
+            
+            if titleResult == .success,
+               let title = titleRef as? String {
+                titles.append(title)
+            }
+        }
+        
+        return titles
+    }
 }

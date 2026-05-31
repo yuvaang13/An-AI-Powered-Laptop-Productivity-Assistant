@@ -11,8 +11,13 @@ swift build
 if [ $? -eq 0 ]; then
     echo "✅ Build successful!"
     echo "🧠 Starting MindGate..."
+    echo "Press Ctrl+C to stop"
+    echo "----------------------------------------"
     swift run
+    echo "----------------------------------------"
+    echo "MindGate stopped"
 else
     echo "❌ Build failed. Please check the errors above."
-    read -p "Press any key to exit..."
 fi
+
+read -p "Press any key to exit..."
