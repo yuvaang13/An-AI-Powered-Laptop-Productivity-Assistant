@@ -23,11 +23,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let hasPermissions = accessibilityManager.hasAccessibilityPermissions()
         print("🔐 Accessibility permissions: \(hasPermissions ? "✅ Granted" : "❌ Denied")")
 
+        // Start monitoring regardless of permissions for testing
+        // Browser monitoring requires permissions, but app monitoring works without them
+        workspaceMonitor.startMonitoring()
+
         if !hasPermissions {
-            showAccessibilityPrompt()
-        } else {
-            // Start monitoring
-            workspaceMonitor.startMonitoring()
+            print("⚠️ Browser monitoring may not work without accessibility permissions")
+            print("💡 Grant permissions in System Settings > Privacy & Security > Accessibility")
         }
     }
 
