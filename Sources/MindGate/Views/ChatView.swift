@@ -255,10 +255,10 @@ struct ChatView: View {
                 } else {
                     showDeniedMessage = true
 
-                    // Trigger overlay and app hiding after delay
+                    // Trigger overlay and close app/tab after delay
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                         windowManager?.showOverlay()
-                        decisionEngine.hideCurrentApp()
+                        decisionEngine.closeCurrentAppOrTab()
 
                         DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
                             windowManager?.hideOverlay()

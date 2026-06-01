@@ -75,6 +75,52 @@ class DecisionEngine {
         }
     }
 
+    func closeCurrentAppOrTab() {
+        guard let app = currentApp else { return }
+
+        // For browsers, try to close the current tab using AppleScript
+        let bundleID = app.bundleIdentifier ?? ""
+        let isBrowser = bundleID.contains("chrome") ||
+                       bundleID.contains("safari") ||
+                       bundleID.contains("firefox") ||
+                       bundleID.contains("brave") ||
+                       bundleID.contains("edge")
+
+        if isBrowser {
+            closeBrowserTab(bundleID: bundleID)
+        } else {
+            // For regular apps, just hide or quit them
+            app.hide()
+        }
+    }
+
+    private func closeBrowserTab(bundleID: String) {
+        let script: String
+        if bundleID.contains("chrome") {
+            script = "tell application \"Google Chrome\" to close active tab of front window"
+        } else if bundleID.contains("safari") {
+            script = "tell application \"Safari\" to close current tab of front window"
+        } else if bundleID.contains("firefox") {
+            script = "tell application \"Firefox\" to close active tab of front window"
+        } else if bundleID.contains("brave") {
+            script = "tell application \"Brave Browser\" to close active tab of front window"
+        } else if bundleID.contains("edge") {
+            script = "tell application \"Microsoft Edge\" to close active tab of front window"
+        } else {
+            script = ""
+        }
+
+        if !script.isEmpty {
+            var error: NSDictionary?
+            NSAppleScript(source: script)?.executeAndReturnError(&error)
+            if let error = error {
+                print("❌ Failed to close browser tab: \(error)")
+            } else {
+                print("✅ Closed browser tab")
+            }
+        }
+    }
+
     func hasActiveAccess(for app: NSRunningApplication) -> Bool {
         guard let grantedAppIdentifier,
               let accessExpiresAt,
