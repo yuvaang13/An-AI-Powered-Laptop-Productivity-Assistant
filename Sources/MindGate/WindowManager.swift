@@ -92,8 +92,9 @@ class WindowManager: ObservableObject {
         let orbSize = isOrbExpanded ? Configuration.Dimensions.orbExpandedWidth : Configuration.Dimensions.orbSize
         let orbHeight = isOrbExpanded ? Configuration.Dimensions.orbExpandedHeight : Configuration.Dimensions.orbSize
 
-        let xOffset: CGFloat = isOrbExpanded ? 18 : 8
-        let yOffset: CGFloat = isOrbExpanded ? 12 : 8
+        // Position orb to be partially hidden in corner when compact
+        let xOffset: CGFloat = isOrbExpanded ? 18 : orbSize * 0.5
+        let yOffset: CGFloat = isOrbExpanded ? 12 : orbSize * 0.5
         let x = screenFrame.maxX - orbSize + xOffset
         let y = screenFrame.maxY - orbHeight + yOffset
 
