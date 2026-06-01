@@ -71,15 +71,15 @@ struct MindGateOrb: View {
 }
 
 struct MindGateOrbPalette {
-    // Premium color palette with vibrant, modern colors
-    let indigo = Color(hex: "#6366F1")
+    // Icon-matched color palette based on the MindGate icon
+    let indigo = Color(hex: "#7C3AED")
     let violet = Color(hex: "#8B5CF6")
-    let deepViolet = Color(hex: "#1E1B4B")
-    let teal = Color(hex: "#14B8A6")
-    let emerald = Color(hex: "#10B981")
-    let cyan = Color(hex: "#06B6D4")
-    let pink = Color(hex: "#EC4899")
-    let ink = Color(hex: "#0F172A")
+    let deepViolet = Color(hex: "#4C1D95")
+    let teal = Color(hex: "#A78BFA")
+    let emerald = Color(hex: "#C4B5FD")
+    let cyan = Color(hex: "#DDD6FE")
+    let pink = Color(hex: "#F5D0FE")
+    let ink = Color(hex: "#1E1B4B")
     let glassWhite = Color.white
 
     static let mindGate = MindGateOrbPalette()
@@ -92,33 +92,33 @@ private struct OrbAmbientBackground: View {
 
     var body: some View {
         ZStack {
-            // Enhanced low-frequency glow for premium feel
+            // Icon-matched glow with purple/violet theme
+            Circle()
+                .fill(palette.violet.opacity(0.35 + 0.15 * breath))
+                .frame(width: size * 1.5, height: size * 1.5)
+                .blur(radius: size * (0.2 + 0.04 * breath))
+
             Circle()
                 .fill(palette.indigo.opacity(0.3 + 0.12 * breath))
-                .frame(width: size * 1.45, height: size * 1.45)
-                .blur(radius: size * (0.18 + 0.035 * breath))
-
-            Circle()
-                .fill(palette.cyan.opacity(0.25 + 0.1 * breath))
-                .frame(width: size * 1.25, height: size * 1.25)
-                .offset(x: size * 0.18, y: size * 0.14)
-                .blur(radius: size * (0.15 + 0.025 * breath))
-
-            Circle()
-                .fill(palette.pink.opacity(0.2 + 0.08 * breath))
                 .frame(width: size * 1.3, height: size * 1.3)
-                .offset(x: -size * 0.2, y: -size * 0.14)
+                .offset(x: size * 0.15, y: size * 0.12)
+                .blur(radius: size * (0.16 + 0.03 * breath))
+
+            Circle()
+                .fill(palette.teal.opacity(0.25 + 0.1 * breath))
+                .frame(width: size * 1.35, height: size * 1.35)
+                .offset(x: -size * 0.18, y: -size * 0.15)
                 .blur(radius: size * 0.18)
 
             Circle()
-                .fill(palette.violet.opacity(0.15 + 0.05 * breath))
-                .frame(width: size * 1.15, height: size * 1.15)
-                .blur(radius: size * 0.12)
+                .fill(palette.deepViolet.opacity(0.2 + 0.08 * breath))
+                .frame(width: size * 1.2, height: size * 1.2)
+                .blur(radius: size * 0.14)
 
             Circle()
-                .stroke(palette.glassWhite.opacity(0.18 + 0.08 * breath), lineWidth: 1.2)
-                .frame(width: size * 0.98, height: size * 0.98)
-                .blur(radius: size * 0.02)
+                .stroke(palette.glassWhite.opacity(0.2 + 0.1 * breath), lineWidth: 1.5)
+                .frame(width: size * 0.97, height: size * 0.97)
+                .blur(radius: size * 0.025)
         }
     }
 }
@@ -164,26 +164,25 @@ private struct OrbCoreBody: View {
                 .fill(
                     AngularGradient(
                         colors: [
+                            palette.violet.opacity(0.95),
                             palette.indigo.opacity(0.92),
-                            palette.violet.opacity(0.88),
-                            palette.pink.opacity(0.82),
-                            palette.cyan.opacity(0.85),
-                            palette.deepViolet.opacity(0.94),
-                            palette.indigo.opacity(0.92)
+                            palette.deepViolet.opacity(0.96),
+                            palette.teal.opacity(0.88),
+                            palette.violet.opacity(0.95)
                         ],
                         center: .center,
-                        angle: .degrees(18 + 9 * Double(breath))
+                        angle: .degrees(18 + 10 * Double(breath))
                     )
                 )
-                .opacity(0.95)
+                .opacity(0.96)
 
             Circle()
                 .fill(
                     RadialGradient(
                         colors: [
-                            palette.glassWhite.opacity(0.32 + 0.08 * breath),
-                            palette.cyan.opacity(0.22),
-                            palette.ink.opacity(0.52)
+                            palette.glassWhite.opacity(0.38 + 0.1 * breath),
+                            palette.teal.opacity(0.28),
+                            palette.ink.opacity(0.58)
                         ],
                         center: .topLeading,
                         startRadius: size * 0.03,
@@ -237,8 +236,8 @@ private struct OrbForegroundHighlights: View {
     var body: some View {
         ZStack {
             softSpecular
-            emeraldCaustic
-            cyanCaustic
+            violetCaustic
+            lavenderCaustic
             lowerGlassArc
         }
         .clipShape(Circle())
@@ -249,74 +248,74 @@ private struct OrbForegroundHighlights: View {
             .fill(
                 RadialGradient(
                     colors: [
-                        palette.glassWhite.opacity(0.85),
-                        palette.glassWhite.opacity(0.32),
+                        palette.glassWhite.opacity(0.9),
+                        palette.glassWhite.opacity(0.38),
                         Color.clear
                     ],
                     center: .center,
                     startRadius: 0,
-                    endRadius: size * 0.25
+                    endRadius: size * 0.28
                 )
             )
-            .frame(width: size * 0.42, height: size * 0.28)
-            .blur(radius: size * (0.02 + 0.015 * breath))
+            .frame(width: size * 0.45, height: size * 0.32)
+            .blur(radius: size * (0.025 + 0.018 * breath))
             .offset(
-                x: -size * (0.2 - breath * travel),
-                y: -size * (0.24 + breath * travel)
+                x: -size * (0.22 - breath * travel),
+                y: -size * (0.26 + breath * travel)
             )
             .blendMode(.screen)
     }
 
-    private var emeraldCaustic: some View {
+    private var violetCaustic: some View {
         Capsule()
             .fill(
                 LinearGradient(
                     colors: [
-                        palette.emerald.opacity(0.0),
-                        palette.emerald.opacity(0.6 + 0.2 * breath),
-                        palette.indigo.opacity(0.0)
+                        palette.teal.opacity(0.0),
+                        palette.teal.opacity(0.65 + 0.22 * breath),
+                        palette.violet.opacity(0.0)
                     ],
                     startPoint: .leading,
                     endPoint: .trailing
                 )
             )
-            .frame(width: size * 0.78, height: max(size * 0.05, 2))
-            .rotationEffect(.degrees(-26 + 6 * Double(breath)))
-            .offset(x: size * 0.1, y: size * (0.07 - breath * 0.025))
-            .blur(radius: size * 0.02)
+            .frame(width: size * 0.8, height: max(size * 0.055, 2))
+            .rotationEffect(.degrees(-26 + 7 * Double(breath)))
+            .offset(x: size * 0.12, y: size * (0.08 - breath * 0.03))
+            .blur(radius: size * 0.022)
             .blendMode(.screen)
     }
 
-    private var cyanCaustic: some View {
+    private var lavenderCaustic: some View {
         Capsule()
             .fill(
                 LinearGradient(
                     colors: [
                         palette.cyan.opacity(0.0),
-                        palette.cyan.opacity(0.5 + 0.18 * breath),
-                        palette.violet.opacity(0.0)
+                        palette.cyan.opacity(0.55 + 0.2 * breath),
+                        palette.indigo.opacity(0.0)
                     ],
                     startPoint: .trailing,
                     endPoint: .leading
                 )
             )
-            .frame(width: size * 0.72, height: max(size * 0.04, 2))
-            .rotationEffect(.degrees(26 - 5 * Double(breath)))
-            .offset(x: -size * 0.08, y: size * (0.05 + breath * 0.02))
-            .blur(radius: size * 0.018)
+            .frame(width: size * 0.75, height: max(size * 0.045, 2))
+            .rotationEffect(.degrees(26 - 6 * Double(breath)))
+            .offset(x: -size * 0.1, y: size * (0.06 + breath * 0.025))
+            .blur(radius: size * 0.02)
             .blendMode(.screen)
     }
 
     private var lowerGlassArc: some View {
         Circle()
-            .trim(from: 0.56, to: 0.9)
+            .trim(from: 0.54, to: 0.92)
             .stroke(
-                palette.glassWhite.opacity(0.38 + 0.1 * breath),
-                style: StrokeStyle(lineWidth: max(size * 0.014, 1), lineCap: .round)
+                palette.glassWhite.opacity(0.42 + 0.12 * breath),
+                style: StrokeStyle(lineWidth: max(size * 0.016, 1.2), lineCap: .round)
             )
-            .rotationEffect(.degrees(10))
-            .padding(size * 0.08)
-            .blur(radius: size * 0.005)
+            .rotationEffect(.degrees(12))
+            .padding(size * 0.085)
+            .blur(radius: size * 0.006)
             .blendMode(.screen)
     }
 }
