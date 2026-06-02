@@ -13,7 +13,7 @@ struct ChatView: View {
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
-            MindGateOrb(size: Configuration.Dimensions.orbExpandedWidth, presentation: .interface)
+            FlowingLinesView(size: Configuration.Dimensions.orbExpandedWidth)
                 .allowsHitTesting(false)
 
             VStack(spacing: 14) {
@@ -41,16 +41,16 @@ struct ChatView: View {
 
             closeButton
         }
-        .clipShape(Circle())
-        .contentShape(Circle())
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .contentShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
-            Circle()
+            RoundedRectangle(cornerRadius: 12)
                 .stroke(
                     LinearGradient(
                         colors: [
                             Color.white.opacity(0.74),
-                            Configuration.Colors.accent.opacity(0.48),
-                            Configuration.Colors.primary.opacity(0.32)
+                            Color.white.opacity(0.48),
+                            Color.white.opacity(0.32)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -58,7 +58,7 @@ struct ChatView: View {
                     lineWidth: 1.4
                 )
         )
-        .shadow(color: Configuration.Colors.primary.opacity(0.2), radius: 28, x: 0, y: 12)
+        .shadow(color: Color.white.opacity(0.2), radius: 28, x: 0, y: 12)
         .shadow(color: Color.black.opacity(0.12), radius: 20, x: 0, y: 10)
     }
 

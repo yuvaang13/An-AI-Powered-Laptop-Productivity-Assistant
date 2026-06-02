@@ -100,13 +100,13 @@ struct Configuration {
     
     // MARK: - UI Styling
     struct Colors {
-        static let primary = Color(red: 0.1, green: 0.5, blue: 0.9)
-        static let secondary = Color(red: 0.5, green: 0.2, blue: 0.8)
-        static let accent = Color(red: 0.0, green: 0.8, blue: 0.6)
-        static let background = Color(red: 0.05, green: 0.05, blue: 0.1)
-        static let surface = Color(red: 0.1, green: 0.1, blue: 0.15)
+        static let primary = Color.white
+        static let secondary = Color.white.opacity(0.8)
+        static let accent = Color.white.opacity(0.6)
+        static let background = Color.black
+        static let surface = Color.black
         static let text = Color.white
-        static let textSecondary = Color(red: 0.7, green: 0.7, blue: 0.8)
+        static let textSecondary = Color.white.opacity(0.7)
     }
     
     struct Animation {

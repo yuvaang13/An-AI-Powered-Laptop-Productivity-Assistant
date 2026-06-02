@@ -8,7 +8,7 @@ class WorkspaceMonitor {
     private var observer: NSObjectProtocol?
     private var lastCheckedApp: NSRunningApplication?
     private var lastCheckedTime: Date?
-    private let debounceInterval: TimeInterval = 0.5
+    private let debounceInterval: TimeInterval = 0.05
 
     init(windowManager: WindowManager, decisionEngine: DecisionEngine) {
         self.windowManager = windowManager
@@ -97,6 +97,20 @@ class WorkspaceMonitor {
 
         for title in windowTitles {
             let lowercasedTitle = title.lowercased()
+            
+            // Check for YouTube specifically with multiple patterns
+            if lowercasedTitle.contains("youtube") || 
+               lowercasedTitle.contains("youtu.be") ||
+               lowercasedTitle.contains("- youtube") {
+                print("⚠️ YouTube detected in title: \(title)")
+                Task { @MainActor in
+                    self.windowManager?.showOrb()
+                    self.decisionEngine?.setCurrentApp(app)
+                }
+                return
+            }
+            
+            // Check other restricted keywords
             for keyword in Configuration.restrictedKeywords {
                 if lowercasedTitle.contains(keyword) {
                     print("⚠️ Restricted keyword detected: \(keyword) in title: \(title)")

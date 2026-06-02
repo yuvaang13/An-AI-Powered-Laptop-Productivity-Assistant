@@ -18,6 +18,7 @@ class WindowManager: ObservableObject {
 
     @Published var isOrbExpanded = false
     @Published var isOverlayVisible = false
+    @Published var isDistractionDetected = false
 
     init(decisionEngine: DecisionEngine) {
         self.decisionEngine = decisionEngine
@@ -89,19 +90,22 @@ class WindowManager: ObservableObject {
         guard let screen = targetScreen() else { return }
         let screenFrame = screen.visibleFrame
 
-        let orbSize = isOrbExpanded ? Configuration.Dimensions.orbExpandedWidth : Configuration.Dimensions.orbSize
-        let orbHeight = isOrbExpanded ? Configuration.Dimensions.orbExpandedHeight : Configuration.Dimensions.orbSize
+        let panelWidth = isOrbExpanded ? Configuration.Dimensions.orbExpandedWidth : Configuration.Dimensions.orbSize
+        let panelHeight = isOrbExpanded ? Configuration.Dimensions.orbExpandedHeight : Configuration.Dimensions.orbSize
 
-        // Position orb on upper middle left edge when compact
-        let xOffset: CGFloat = isOrbExpanded ? 18 : orbSize * 0.5
-        let yOffset: CGFloat = isOrbExpanded ? 12 : orbSize * 0.5
-        let x = screenFrame.minX - xOffset
-        let y = screenFrame.maxY - orbHeight - yOffset - 100
+        // Position panel on upper left edge
+        let xOffset: CGFloat = isOrbExpanded ? 18 : 12
+        let yOffset: CGFloat = isOrbExpanded ? 12 : 12
+        
+        // Add +50px offset when distraction is detected
+        let distractionOffset: CGFloat = isDistractionDetected ? 50 : 0
+        let x = screenFrame.minX + xOffset + distractionOffset
+        let y = screenFrame.maxY - panelHeight - yOffset - 100 + distractionOffset
 
-        let contentSize = NSSize(width: orbSize, height: orbHeight)
+        let contentSize = NSSize(width: panelWidth, height: panelHeight)
         let frame = NSRect(origin: NSPoint(x: x, y: y), size: contentSize)
 
-        orbPanel?.setFrame(frame, display: true)
+        orbPanel?.setFrame(frame, display: true, animate: true)
         applyOrbPanelShape(size: contentSize)
     }
 
@@ -115,7 +119,7 @@ class WindowManager: ObservableObject {
         contentView.wantsLayer = true
         contentView.frame = NSRect(origin: .zero, size: size)
         contentView.layer?.backgroundColor = NSColor.clear.cgColor
-        contentView.layer?.cornerRadius = min(size.width, size.height) / 2
+        contentView.layer?.cornerRadius = 12
         contentView.layer?.cornerCurve = .continuous
         contentView.layer?.masksToBounds = true
     }
@@ -154,7 +158,8 @@ class WindowManager: ObservableObject {
     // MARK: - Orb Control
     func showOrb() {
         print("🔮 Showing Orb...")
-        isOrbExpanded = false
+        isDistractionDetected = true
+        isOrbExpanded = true  // Auto-expand to show "Why are you here?"
         positionOrbPanel()
         refreshOrbView()
 
@@ -169,6 +174,7 @@ class WindowManager: ObservableObject {
     func hideOrb() {
         orbPanel?.orderOut(nil)
         isOrbExpanded = false
+        isDistractionDetected = false
         refreshOrbView()
     }
 
@@ -184,6 +190,7 @@ class WindowManager: ObservableObject {
 
     func collapseOrb() {
         isOrbExpanded = false
+        isDistractionDetected = false
         positionOrbPanel()
         refreshOrbView()
     }
