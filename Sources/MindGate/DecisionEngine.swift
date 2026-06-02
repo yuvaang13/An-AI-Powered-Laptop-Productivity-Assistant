@@ -26,6 +26,8 @@ class DecisionEngine {
     }
 
     func evaluateRequest(userInput: String) async throws -> DecisionResult {
+        logger.info("User justification received: \"\(userInput)\"")
+
         let systemPrompt = """
         You are a highly advanced, strict productivity mentor. The user is trying to access a distracting app. Their reason is: '\(userInput)'.
         If this is genuinely essential for immediate work, task tracking, or safety, respond only with the word 'YES'.
@@ -34,16 +36,26 @@ class DecisionEngine {
 
         do {
             let response = try await ollamaService.generateResponse(prompt: systemPrompt)
+            logger.info("Ollama raw response: \"\(response)\"")
 
-            if Self.parseApproval(from: response) {
-                return DecisionResult(isApproved: true, message: "Access approved. Please select a duration.")
+            let isApproved = Self.parseApproval(from: response)
+            let resultMessage: String
+
+            if isApproved {
+                resultMessage = "Access approved. Please select a duration."
+                logger.info("Decision: APPROVED. Message: \"\(resultMessage)\"")
             } else {
-                return DecisionResult(isApproved: false, message: "Access denied. Stay focused on your work.")
+                resultMessage = "Access denied. Stay focused on your work."
+                logger.warning("Decision: DENIED. Message: \"\(resultMessage)\"")
             }
+            return DecisionResult(isApproved: isApproved, message: resultMessage)
+
         } catch {
-            logger.error("Error evaluating request with Ollama: \(error.localizedDescription)")
+            logger.error("Error evaluating request with Ollama: \(error.localizedDescription). Defaulting to access denied.")
             // If Ollama fails, default to denying access for safety
-            return DecisionResult(isApproved: false, message: "AI service unavailable. Access denied.")
+            let errorMessage = "AI service unavailable. Access denied."
+            logger.warning("Decision: DENIED. Message: \"\(errorMessage)\" (due to AI service error)")
+            return DecisionResult(isApproved: false, message: errorMessage)
         }
     }
 

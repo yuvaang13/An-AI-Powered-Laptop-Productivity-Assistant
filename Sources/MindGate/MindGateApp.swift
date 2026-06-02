@@ -9,6 +9,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var decisionEngine: DecisionEngine!
     var configurationManager: ConfigurationManager!
     private let logger = Logger(subsystem: "com.mindgate.MindGate", category: "AppDelegate")
+    private var statusBarItem: NSStatusItem!
+    private var settingsWindow: NSWindow?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         logger.info("🚀 MindGate: Application launched")
@@ -42,6 +44,36 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             logger.warning("⚠️ Browser monitoring may not work without accessibility permissions")
             logger.info("💡 Grant permissions in System Settings > Privacy & Security > Accessibility")
         }
+
+        setupStatusBarItem()
+    }
+
+    private func setupStatusBarItem() {
+        statusBarItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        statusBarItem.button?.image = NSImage(systemSymbolName: "brain.head.profile", accessibilityDescription: "MindGate")
+        statusBarItem.button?.toolTip = "MindGate Productivity Assistant"
+
+        let menu = NSMenu()
+        menu.addItem(NSMenuItem(title: "Settings", action: #selector(openSettings), keyEquivalent: ""))
+        menu.addItem(NSMenuItem.separator())
+        menu.addItem(NSMenuItem(title: "Quit MindGate", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        statusBarItem.menu = menu
+    }
+
+    @objc private func openSettings() {
+        if settingsWindow == nil {
+            settingsWindow = NSWindow(
+                contentRect: NSRect(x: 0, y: 0, width: 600, height: 800),
+                styleMask: [.titled, .closable, .miniaturizable, .resizable],
+                backing: .buffered,
+                defer: false
+            )
+            settingsWindow?.center()
+            settingsWindow?.setFrameAutosaveName("MindGateSettingsWindow")
+            settingsWindow?.contentView = NSHostingView(rootView: SettingsView().environmentObject(configurationManager))
+            settingsWindow?.title = "MindGate Settings"
+        }
+        settingsWindow?.makeKeyAndOrderFront(nil)
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {

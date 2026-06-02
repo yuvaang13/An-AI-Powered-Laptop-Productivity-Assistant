@@ -10,6 +10,9 @@ struct AppSettings: Codable {
     var ollamaModel: String
     var accessDurations: [TimeInterval]
     var accessDurationLabels: [String]
+    var productiveTasks: [String]
+    var productiveApps: [String]
+    var justificationCountdownDuration: Int
 
     static let defaultSettings = AppSettings(
         distractingApps: [
@@ -32,7 +35,22 @@ struct AppSettings: Codable {
         ollamaURL: "http://localhost:11434/api/generate",
         ollamaModel: "lfm2.5-thinking:1.2b",
         accessDurations: [300, 600, 900],
-        accessDurationLabels: ["5 Mins", "10 Mins", "15 Mins"]
+        accessDurationLabels: ["5 Mins", "10 Mins", "15 Mins"],
+        productiveTasks: [
+            "Review today's coding tasks",
+            "Plan next steps for MindGate",
+            "Learn a new Swift concept",
+            "Organize project files",
+            "Respond to important emails"
+        ],
+        productiveApps: [
+            "Xcode",
+            "Safari", // Can be used for productive research
+            "Things", // Example task manager
+            "Obsidian", // Example note-taking app
+            "Terminal"
+        ],
+        justificationCountdownDuration: 15
     )
 }
 

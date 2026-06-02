@@ -11,6 +11,9 @@ struct ChatView: View {
     @State private var aiResponse: String = ""
     @State private var showDurationSelection: Bool = false
     @State private var showDeniedMessage: Bool = false
+    @State private var showTakeoverView: Bool = false // New state for takeover view
+    @State private var countdownSeconds: Int = 15 // Initial countdown time
+    @State private var timer: Timer? // Timer instance
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
@@ -49,7 +52,7 @@ struct ChatView: View {
                     .font(.system(size: 13, weight: .medium, design: .rounded))
                     .foregroundColor(Color(hex: configuration.theme.colors.primary).opacity(0.62))
                     .multilineTextAlignment(.center)
-                    .opacity(showDurationSelection || showDeniedMessage || isLoading ? 0 : 1)
+                    .opacity(showDurationSelection || showDeniedMessage || showTakeoverView || isLoading ? 0 : 1)
                     .tracking(0.2)
 
                 contentView
@@ -81,12 +84,16 @@ struct ChatView: View {
         )
         .shadow(color: .black.opacity(0.6), radius: 40, x: 0, y: 20)
         .shadow(color: .white.opacity(0.08), radius: 20, x: 0, y: 8)
+        .onAppear(perform: startCountdown)
+        .onDisappear(perform: stopCountdown)
     }
 
     @ViewBuilder
     private var contentView: some View {
         if showDurationSelection {
             durationSelectionView
+        } else if showTakeoverView {
+            TakeoverView(configuration: configuration, windowManager: windowManager, decisionEngine: decisionEngine)
         } else if showDeniedMessage {
             deniedMessageView
         } else if isLoading {
@@ -109,6 +116,10 @@ struct ChatView: View {
 
         if isLoading {
             return "Checking with Llama"
+        }
+
+        if countdownSeconds > 0 {
+            return "Why are you here? (\(countdownSeconds)s)"
         }
 
         return "Why are you here?"
@@ -310,7 +321,7 @@ struct ChatView: View {
                 if result.isApproved {
                     showDurationSelection = true
                 } else {
-                    showDeniedMessage = true
+                    showTakeoverView = true // Show takeover view on denial
 
                     // Trigger overlay and close app/tab after delay
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
@@ -345,10 +356,53 @@ struct ChatView: View {
         isLoading = false
         showDurationSelection = false
         showDeniedMessage = false
+        showTakeoverView = false // Reset takeover view state
+        countdownSeconds = 15 // Reset countdown
+        stopCountdown() // Stop any active timer
+    }
+
+    private func startCountdown() {
+        // Invalidate any existing timer first
+        stopCountdown()
+
+        countdownSeconds = 15 // Set initial countdown time
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+            if self.countdownSeconds > 0 {
+                self.countdownSeconds -= 1
+            } else {
+                self.handleCountdownExpired()
+            }
+        }
+    }
+
+    private func stopCountdown() {
+        timer?.invalidate()
+        timer = nil
+    }
+
+    private func handleCountdownExpired() {
+        stopCountdown()
+        if !isLoading && !showDurationSelection && !showDeniedMessage {
+            // If no decision has been made and timer expires, deny access
+            Task { @MainActor in
+                isLoading = false
+                aiResponse = "Time's up! Access denied."
+                showTakeoverView = true // Show takeover view on denial
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    windowManager?.showOverlay()
+                    decisionEngine.closeCurrentAppOrTab()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                        windowManager?.hideOverlay()
+                        windowManager?.hideOrb()
+                        resetState()
+                    }
+                }
+            }
+        }
     }
 }
 
-private struct MinimalActionButtonStyle: ButtonStyle {
+struct MinimalActionButtonStyle: ButtonStyle {
     let configuration: Configuration
 
     func makeBody(configuration: Self.Configuration) -> some View {
