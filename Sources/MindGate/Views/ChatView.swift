@@ -253,13 +253,15 @@ struct ChatView: View {
 
     private var promptBox: some View {
         HStack(alignment: .bottom, spacing: 10) {
-            ReliablePromptTextView(
-                text: $userInput,
-                placeholder: "I need this because...",
-                onSubmit: submitRequest,
-                configuration: configuration
-            )
-            .frame(height: 50)
+            TextField("I need this because...", text: $userInput)
+                .textFieldStyle(.plain)
+                .font(.system(size: 13, weight: .regular))
+                .foregroundColor(Color(hex: configuration.theme.colors.primary).opacity(0.9))
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
+                .background(Color.clear)
+                .onSubmit(submitRequest)
+                .frame(height: 50)
 
             Button(action: submitRequest) {
                 Image(systemName: "arrow.up")
@@ -487,6 +489,7 @@ private struct ReliablePromptTextView: NSViewRepresentable {
         textView.textContainer?.containerSize = NSSize(width: 280, height: CGFloat.greatestFiniteMagnitude)
         textView.isVerticallyResizable = true
         textView.isHorizontallyResizable = false
+        textView.isFieldEditor = false
         textView.minSize = NSSize(width: 0, height: 0)
         textView.maxSize = NSSize(width: 280, height: CGFloat.greatestFiniteMagnitude)
         textView.frame = NSRect(x: 0, y: 0, width: 280, height: 52)
@@ -550,6 +553,16 @@ private final class PlaceholderTextView: NSTextView {
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    override var acceptsFirstResponder: Bool {
+        return true
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        // Make sure we become first responder on click
+        window?.makeFirstResponder(self)
+        super.mouseDown(with: event)
     }
 
     override func draw(_ dirtyRect: NSRect) {
