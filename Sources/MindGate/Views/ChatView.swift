@@ -158,6 +158,12 @@ struct ChatView: View {
             promptBox
         }
         .padding(.horizontal, 0)
+        .onAppear {
+            // Force focus on text input when view appears
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                // This will trigger updateNSView which sets first responder
+            }
+        }
     }
 
     private var assistantPromptView: some View {
@@ -458,13 +464,7 @@ private struct ReliablePromptTextView: NSViewRepresentable {
         Coordinator(text: $text, onSubmit: onSubmit)
     }
 
-    func makeNSView(context: Context) -> NSScrollView {
-        let scrollView = NSScrollView()
-        scrollView.drawsBackground = false
-        scrollView.hasVerticalScroller = false
-        scrollView.hasHorizontalScroller = false
-        scrollView.borderType = .noBorder
-
+    func makeNSView(context: Context) -> NSTextView {
         let textView = PlaceholderTextView(configuration: configuration)
         textView.placeholder = placeholder
         textView.delegate = context.coordinator
@@ -476,7 +476,7 @@ private struct ReliablePromptTextView: NSViewRepresentable {
         textView.allowsUndo = true
         textView.isEditable = true
         textView.isSelectable = true
-        textView.font = NSFont.systemFont(ofSize: 14, weight: .regular)
+        textView.font = NSFont.systemFont(ofSize: 13, weight: .regular)
         textView.textColor = NSColor(Color(hex: configuration.theme.colors.primary).opacity(0.9))
         textView.insertionPointColor = NSColor(Color(hex: configuration.theme.colors.primary))
         textView.backgroundColor = .clear
@@ -484,33 +484,33 @@ private struct ReliablePromptTextView: NSViewRepresentable {
         textView.textContainerInset = NSSize(width: 0, height: 2)
         textView.textContainer?.lineFragmentPadding = 0
         textView.textContainer?.widthTracksTextView = true
-        textView.textContainer?.containerSize = NSSize(width: scrollView.contentSize.width, height: .greatestFiniteMagnitude)
+        textView.textContainer?.containerSize = NSSize(width: 280, height: CGFloat.greatestFiniteMagnitude)
         textView.isVerticallyResizable = true
         textView.isHorizontallyResizable = false
         textView.minSize = NSSize(width: 0, height: 0)
-        textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
-        textView.frame = NSRect(x: 0, y: 0, width: 240, height: 62)
+        textView.maxSize = NSSize(width: 280, height: CGFloat.greatestFiniteMagnitude)
+        textView.frame = NSRect(x: 0, y: 0, width: 280, height: 52)
         textView.autoresizingMask = [.width]
         textView.string = text
 
-        scrollView.documentView = textView
-
-        DispatchQueue.main.async {
-            textView.window?.makeFirstResponder(textView)
-        }
-
-        return scrollView
+        return textView
     }
 
-    func updateNSView(_ scrollView: NSScrollView, context: Context) {
-        guard let textView = scrollView.documentView as? PlaceholderTextView else { return }
+    func updateNSView(_ textView: NSTextView, context: Context) {
+        guard let placeholderTextView = textView as? PlaceholderTextView else { return }
 
-        textView.placeholder = placeholder
+        placeholderTextView.placeholder = placeholder
         if textView.string != text {
             textView.string = text
         }
-        textView.frame.size.width = scrollView.contentSize.width
         textView.needsDisplay = true
+        
+        // Make text view first responder when view updates
+        DispatchQueue.main.async {
+            if textView.window?.firstResponder !== textView {
+                textView.window?.makeFirstResponder(textView)
+            }
+        }
     }
 
     final class Coordinator: NSObject, NSTextViewDelegate {
