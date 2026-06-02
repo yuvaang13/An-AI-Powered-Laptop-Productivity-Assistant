@@ -86,6 +86,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return false
     }
+    
+    func applicationWillTerminate(_ notification: Notification) {
+        logger.info("🛑 MindGate: Application terminating")
+        workspaceMonitor?.stopMonitoring()
+    }
 
     private func showAccessibilityPrompt() {
         let alert = NSAlert()

@@ -13,7 +13,14 @@ if [ $? -eq 0 ]; then
     echo "🧠 Starting MindGate..."
     echo "Press Ctrl+C to stop"
     echo "----------------------------------------"
-    swift run
+    
+    swift run &
+    SWIFT_PID=$!
+    
+    # Wait for the swift process
+    wait $SWIFT_PID
+    EXIT_CODE=$?
+    
     echo "----------------------------------------"
     echo "MindGate stopped"
 else
