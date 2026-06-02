@@ -32,7 +32,7 @@ cd MindGate-An-AI-Powered-Laptop-Productivity-Assistant
 ```bash
 # Visit https://ollama.ai to download and install Ollama
 # Then pull a model:
-ollama pull llama3.1
+ollama pull lfm2.5
 ```
 
 3. Build the project:
