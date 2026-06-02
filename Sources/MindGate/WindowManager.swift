@@ -184,9 +184,9 @@ class WindowManager: ObservableObject {
     func showOrb() {
         logger.info("🔮 Showing Orb...")
         isDistractionDetected = true
-        isOrbExpanded = false
-        positionOrbPanel()
+        isOrbExpanded = true
         refreshOrbView()
+        positionOrbPanel()
 
         guard let panel = orbPanel else {
             logger.error("❌ Orb panel is nil")

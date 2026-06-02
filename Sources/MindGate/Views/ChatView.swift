@@ -46,9 +46,9 @@ struct ChatView: View {
                     .foregroundColor(Color(hex: configuration.theme.colors.primary).opacity(0.95))
                     .multilineTextAlignment(.center)
                     .shadow(color: Color(hex: configuration.theme.colors.background).opacity(0.4), radius: 12, x: 0, y: 4)
-                    .tracking(-0.5)
+                    .tracking(0)
 
-                Text("Explain the work reason. I'll decide fast.")
+                Text("I noticed a distraction. Tell me the work reason and I'll decide fast.")
                     .font(.system(size: 13, weight: .medium, design: .rounded))
                     .foregroundColor(Color(hex: configuration.theme.colors.primary).opacity(0.62))
                     .multilineTextAlignment(.center)
@@ -115,7 +115,7 @@ struct ChatView: View {
         }
 
         if isLoading {
-            return "Checking with Llama"
+            return "Checking with AI"
         }
 
         if countdownSeconds > 0 {
@@ -151,10 +151,20 @@ struct ChatView: View {
     }
 
     private var inputView: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 12) {
+            assistantPromptView
             promptBox
         }
         .padding(.horizontal, 2)
+    }
+
+    private var assistantPromptView: some View {
+        Text("Why do you need access right now?")
+            .font(.system(size: 16, weight: .semibold, design: .rounded))
+            .foregroundColor(Color(hex: configuration.theme.colors.primary).opacity(0.9))
+            .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, 10)
     }
 
     private var loadingView: some View {
