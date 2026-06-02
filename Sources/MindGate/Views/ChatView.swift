@@ -158,12 +158,6 @@ struct ChatView: View {
             promptBox
         }
         .padding(.horizontal, 0)
-        .onAppear {
-            // Force focus on text input when view appears
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                // This will trigger updateNSView which sets first responder
-            }
-        }
     }
 
     private var assistantPromptView: some View {
@@ -253,15 +247,13 @@ struct ChatView: View {
 
     private var promptBox: some View {
         HStack(alignment: .bottom, spacing: 10) {
-            TextField("I need this because...", text: $userInput)
-                .textFieldStyle(.plain)
-                .font(.system(size: 13, weight: .regular))
-                .foregroundColor(Color(hex: configuration.theme.colors.primary).opacity(0.9))
-                .padding(.horizontal, 8)
-                .padding(.vertical, 6)
-                .background(Color.clear)
-                .onSubmit(submitRequest)
-                .frame(height: 50)
+            ReliablePromptTextView(
+                text: $userInput,
+                placeholder: "I need this because...",
+                onSubmit: submitRequest,
+                configuration: configuration
+            )
+            .frame(height: 50)
 
             Button(action: submitRequest) {
                 Image(systemName: "arrow.up")
