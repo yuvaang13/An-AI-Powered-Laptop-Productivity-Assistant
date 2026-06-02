@@ -4,16 +4,18 @@ struct OrbView: View {
     weak var windowManager: WindowManager?
     let decisionEngine: DecisionEngine
     let configuration: Configuration
+    let isExpanded: Bool
 
-    init(windowManager: WindowManager?, decisionEngine: DecisionEngine, configuration: Configuration) {
+    init(windowManager: WindowManager?, decisionEngine: DecisionEngine, configuration: Configuration, isExpanded: Bool) {
         self.windowManager = windowManager
         self.decisionEngine = decisionEngine
         self.configuration = configuration
+        self.isExpanded = isExpanded
     }
 
     var body: some View {
         ZStack {
-            if windowManager?.isOrbExpanded ?? false {
+            if isExpanded {
                 ChatView(windowManager: windowManager, decisionEngine: decisionEngine, configuration: configuration)
                     .frame(width: configuration.theme.dimensions.orbExpandedWidth, height: configuration.theme.dimensions.orbExpandedHeight)
             } else {

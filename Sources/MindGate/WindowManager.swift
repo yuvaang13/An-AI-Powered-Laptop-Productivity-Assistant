@@ -32,7 +32,12 @@ class WindowManager: ObservableObject {
 
     // MARK: - Orb Panel Setup
     private func setupOrbPanel() {
-        let orbView = OrbView(windowManager: self, decisionEngine: decisionEngine, configuration: configuration)
+        let orbView = OrbView(
+            windowManager: self,
+            decisionEngine: decisionEngine,
+            configuration: configuration,
+            isExpanded: isOrbExpanded
+        )
 
         orbHostingController = NSHostingController(rootView: orbView)
 
@@ -114,7 +119,20 @@ class WindowManager: ObservableObject {
     }
 
     private func refreshOrbView() {
-        orbHostingController?.rootView = OrbView(windowManager: self, decisionEngine: decisionEngine, configuration: configuration)
+        orbHostingController?.rootView = OrbView(
+            windowManager: self,
+            decisionEngine: decisionEngine,
+            configuration: configuration,
+            isExpanded: isOrbExpanded
+        )
+        orbHostingController?.view.frame = NSRect(
+            origin: .zero,
+            size: NSSize(
+                width: isOrbExpanded ? configuration.theme.dimensions.orbExpandedWidth : configuration.theme.dimensions.orbSize,
+                height: isOrbExpanded ? configuration.theme.dimensions.orbExpandedHeight : configuration.theme.dimensions.orbSize
+            )
+        )
+        orbHostingController?.view.needsLayout = true
     }
 
     private func applyOrbPanelShape(size: NSSize) {
@@ -141,10 +159,13 @@ class WindowManager: ObservableObject {
         panel.alphaValue = 1
         panel.ignoresMouseEvents = false
         panel.setFrame(panel.frame, display: true)
+        panel.contentView?.layoutSubtreeIfNeeded()
         panel.orderFrontRegardless()
 
-        NSApplication.shared.activate(ignoringOtherApps: true)
-        panel.makeKeyAndOrderFront(nil)
+        if isOrbExpanded {
+            NSApplication.shared.activate(ignoringOtherApps: true)
+            panel.makeKeyAndOrderFront(nil)
+        }
         panel.orderFrontRegardless()
         panel.displayIfNeeded()
 
@@ -163,7 +184,7 @@ class WindowManager: ObservableObject {
     func showOrb() {
         logger.info("🔮 Showing Orb...")
         isDistractionDetected = true
-        isOrbExpanded = true  // Auto-expand to show "Why are you here?"
+        isOrbExpanded = false
         positionOrbPanel()
         refreshOrbView()
 
@@ -184,8 +205,8 @@ class WindowManager: ObservableObject {
 
     func expandOrb() {
         isOrbExpanded = true
-        positionOrbPanel()
         refreshOrbView()
+        positionOrbPanel()
 
         if let orbPanel {
             presentOrbPanel(orbPanel)
