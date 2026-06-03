@@ -219,7 +219,7 @@ class WindowManager: ObservableObject {
         if let orbPanel {
             presentOrbPanel(orbPanel)
             // Start focus polling after a short delay to allow view to render
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
                 self.startFocusPolling()
             }
         }
@@ -237,6 +237,10 @@ class WindowManager: ObservableObject {
                 self?.pollForFirstResponder()
             }
         }
+        // Auto-stop after 2 seconds to prevent infinite polling
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            self.stopFocusPolling()
+        }
     }
     
     private func stopFocusPolling() {
@@ -245,22 +249,18 @@ class WindowManager: ObservableObject {
     }
     
     private func pollForFirstResponder() {
-        guard let panel = orbPanel else { return }
+        guard let panel = orbPanel else { 
+            stopFocusPolling()
+            return 
+        }
         
-        // Find the NSTextView recursively
         let textView = findTextViewRecursively(in: panel.contentView)
         
         if let textView = textView {
             if panel.firstResponder !== textView {
                 NSApp.activate(ignoringOtherApps: true)
-                panel.makeKeyAndOrderFront(nil)
-                // Try to make first responder directly
-                if !textView.becomeFirstResponder() {
-                    panel.makeFirstResponder(textView)
-                }
-            } else {
-                // We have focus, stop polling
-                stopFocusPolling()
+                panel.makeKey()
+                panel.makeFirstResponder(textView)
             }
         }
     }
@@ -303,9 +303,6 @@ class WindowManager: ObservableObject {
         isDistractionDetected = false
         positionOrbPanel()
         refreshOrbView()
-        // Stop focus polling
-        focusTimer?.invalidate()
-        focusTimer = nil
     }
 
     // MARK: - Overlay Control
