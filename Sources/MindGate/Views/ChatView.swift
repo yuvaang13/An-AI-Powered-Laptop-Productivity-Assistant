@@ -86,7 +86,11 @@ struct ChatView: View {
         )
         .shadow(color: .black.opacity(0.6), radius: 40, x: 0, y: 20)
         .shadow(color: .white.opacity(0.08), radius: 20, x: 0, y: 8)
-        .onAppear(perform: startCountdown)
+        .onAppear {
+            startCountdown()
+            // Activate the app to enable keyboard input
+            NSApp.activate(ignoringOtherApps: true)
+        }
         .onDisappear(perform: stopCountdown)
     }
 
@@ -455,10 +459,10 @@ private struct ReliablePromptTextView: NSViewRepresentable {
     let configuration: Configuration
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(text: $text, onSubmit: onSubmit)
+        Coordinator(text: $text, onSubmit: onSubmit, configuration: configuration)
     }
 
-    func makeNSView(context: Context) -> NSTextView {
+    func makeNSView(context: Context) -> NSView {
         let textView = PlaceholderTextView(configuration: configuration)
         textView.placeholder = placeholder
         textView.delegate = context.coordinator
@@ -475,44 +479,52 @@ private struct ReliablePromptTextView: NSViewRepresentable {
         textView.insertionPointColor = NSColor(Color(hex: configuration.theme.colors.primary))
         textView.backgroundColor = .clear
         textView.drawsBackground = false
-        textView.textContainerInset = NSSize(width: 0, height: 2)
+        textView.textContainerInset = NSSize(width: 4, height: 4)
         textView.textContainer?.lineFragmentPadding = 0
         textView.textContainer?.widthTracksTextView = true
-        textView.textContainer?.containerSize = NSSize(width: 280, height: CGFloat.greatestFiniteMagnitude)
         textView.isVerticallyResizable = true
         textView.isHorizontallyResizable = false
         textView.isFieldEditor = false
-        textView.minSize = NSSize(width: 0, height: 0)
-        textView.maxSize = NSSize(width: 280, height: CGFloat.greatestFiniteMagnitude)
-        textView.frame = NSRect(x: 0, y: 0, width: 280, height: 52)
-        textView.autoresizingMask = [.width]
         textView.string = text
+        
+        // Wrap in scroll view
+        let scrollView = NSScrollView(frame: NSRect(x: 0, y: 0, width: 280, height: 52))
+        scrollView.documentView = textView
+        scrollView.hasVerticalScroller = false
+        scrollView.hasHorizontalScroller = false
+        scrollView.autoresizingMask = [.width, .height]
+        scrollView.borderType = NSBorderType.noBorder
+        scrollView.drawsBackground = false
 
-        return textView
+        return scrollView
     }
 
-    func updateNSView(_ textView: NSTextView, context: Context) {
-        guard let placeholderTextView = textView as? PlaceholderTextView else { return }
-
-        placeholderTextView.placeholder = placeholder
+    func updateNSView(_ nsView: NSView, context: Context) {
+        guard let scrollView = nsView as? NSScrollView,
+              let textView = scrollView.documentView as? PlaceholderTextView else { return }
+        
+        textView.placeholder = placeholder
         if textView.string != text {
             textView.string = text
         }
         textView.needsDisplay = true
         
-        // Make text view first responder when view updates
+        // Make text view first responder
         DispatchQueue.main.async {
-            if textView.window?.firstResponder !== textView {
-                textView.window?.makeFirstResponder(textView)
+            if let window = scrollView.window {
+                if window.firstResponder !== textView {
+                    window.makeKey()
+                    window.makeFirstResponder(textView)
+                }
             }
         }
     }
 
-    final class Coordinator: NSObject, NSTextViewDelegate {
+final class Coordinator: NSObject, NSTextViewDelegate {
         @Binding private var text: String
         private let onSubmit: () -> Void
 
-        init(text: Binding<String>, onSubmit: @escaping () -> Void) {
+        init(text: Binding<String>, onSubmit: @escaping () -> Void, configuration: Configuration) {
             _text = text
             self.onSubmit = onSubmit
         }
