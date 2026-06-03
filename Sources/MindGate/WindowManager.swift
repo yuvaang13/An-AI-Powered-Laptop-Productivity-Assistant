@@ -60,6 +60,8 @@ class WindowManager: ObservableObject {
         panel.becomesKeyOnlyIfNeeded = false
         panel.acceptsMouseMovedEvents = true
         panel.tabbingMode = .disallowed
+        // Ensure panel can accept keyboard focus
+        panel.ignoresMouseEvents = false
         panel.contentView = orbHostingController?.view
         panel.contentView?.wantsLayer = true
         panel.contentView?.layer?.backgroundColor = NSColor.clear.cgColor
@@ -157,7 +159,8 @@ class WindowManager: ObservableObject {
     }
 
     private func presentOrbPanel(_ panel: NSPanel) {
-        panel.level = orbWindowLevel
+        // Use normal level when expanded to allow proper keyboard input
+        panel.level = isOrbExpanded ? .normal : orbWindowLevel
         panel.alphaValue = 1
         panel.ignoresMouseEvents = false
         panel.setFrame(panel.frame, display: true)
@@ -167,6 +170,8 @@ class WindowManager: ObservableObject {
         if isOrbExpanded {
             NSApplication.shared.activate(ignoringOtherApps: true)
             panel.makeKeyAndOrderFront(nil)
+            // Make panel the main window for keyboard input
+            panel.makeMain()
         }
         panel.orderFrontRegardless()
         panel.displayIfNeeded()
@@ -231,17 +236,19 @@ class WindowManager: ObservableObject {
         startFocusPolling()
     }
     
+    func forceKeyboardFocus() {
+        // Immediately attempt to focus the text view
+        pollForFirstResponder()
+    }
+    
     private func startFocusPolling() {
         focusTimer?.invalidate()
-        focusTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
+        focusTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.pollForFirstResponder()
             }
         }
-        // Auto-stop after 2 seconds to prevent infinite polling
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            self.stopFocusPolling()
-        }
+        // No auto-stop - will be stopped when orb is collapsed
     }
     
     private func stopFocusPolling() {
@@ -250,7 +257,7 @@ class WindowManager: ObservableObject {
     }
     
     private func pollForFirstResponder() {
-        guard let panel = orbPanel else { 
+        guard let panel = orbPanel, isOrbExpanded else { 
             stopFocusPolling()
             return 
         }
@@ -260,7 +267,9 @@ class WindowManager: ObservableObject {
         if let textView = textView {
             NSApp.activate(ignoringOtherApps: true)
             panel.makeKeyAndOrderFront(nil)
-            _ = textView.becomeFirstResponder()
+            panel.makeMain()
+            
+            // Make first responder using window method
             panel.makeFirstResponder(textView)
         }
     }
@@ -303,6 +312,9 @@ class WindowManager: ObservableObject {
         isDistractionDetected = false
         positionOrbPanel()
         refreshOrbView()
+        // Stop focus polling when collapsing orb
+        focusTimer?.invalidate()
+        focusTimer = nil
     }
 
     // MARK: - Overlay Control

@@ -92,6 +92,8 @@ struct ChatView: View {
             NSApp.activate(ignoringOtherApps: true)
             // Request focus polling from WindowManager
             windowManager?.requestKeyboardFocus()
+            // Also trigger immediate focus attempt
+            windowManager?.forceKeyboardFocus()
         }
         .onDisappear(perform: stopCountdown)
     }
@@ -511,13 +513,13 @@ private struct ReliablePromptTextView: NSViewRepresentable {
         }
         textView.needsDisplay = true
         
-        // Make text view first responder
+        // Make window key and focus the text view
         DispatchQueue.main.async {
-            if let window = scrollView.window {
-                NSApp.activate(ignoringOtherApps: true)
-                window.makeKeyAndOrderFront(nil)
-                window.makeFirstResponder(textView)
-            }
+            guard let window = scrollView.window else { return }
+            NSApp.activate(ignoringOtherApps: true)
+            window.makeKeyAndOrderFront(nil)
+            window.makeMain()
+            window.makeFirstResponder(textView)
         }
     }
 
