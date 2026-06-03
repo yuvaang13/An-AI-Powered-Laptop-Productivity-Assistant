@@ -28,6 +28,8 @@ class WindowManager: ObservableObject {
     private let orbWindowLevel: NSWindow.Level = .popUpMenu
     private let logger = Logger(subsystem: "com.mindgate.MindGate", category: "WindowManager")
     private var focusTimer: Timer?
+    private var focusPollRetryCount = 0
+    private let maxFocusPollRetries = 20 // Stop after 2 seconds of polling
     weak var targetApp: NSRunningApplication?
     
     private var targetWindowFrame: NSRect?
@@ -258,9 +260,15 @@ class WindowManager: ObservableObject {
     
     private func startFocusPolling() {
         focusTimer?.invalidate()
+        focusPollRetryCount = 0
         focusTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
+            guard let self else { return }
             Task { @MainActor in
-                self?.pollForFirstResponder()
+                self.pollForFirstResponder()
+                self.focusPollRetryCount += 1
+                if self.focusPollRetryCount >= self.maxFocusPollRetries {
+                    self.stopFocusPolling()
+                }
             }
         }
     }
@@ -268,6 +276,7 @@ class WindowManager: ObservableObject {
     private func stopFocusPolling() {
         focusTimer?.invalidate()
         focusTimer = nil
+        focusPollRetryCount = 0
     }
     
     private func pollForFirstResponder() {
@@ -283,6 +292,11 @@ class WindowManager: ObservableObject {
             panel.makeKeyAndOrderFront(nil)
             panel.makeMain()
             panel.makeFirstResponder(textView)
+            
+            // Stop polling once focus is achieved
+            if panel.firstResponder === textView {
+                stopFocusPolling()
+            }
         }
     }
     

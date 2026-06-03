@@ -19,7 +19,7 @@ struct OrbView: View {
                 ChatView(windowManager: windowManager, decisionEngine: decisionEngine, configuration: configurationManager.configuration)
                     .frame(width: configurationManager.configuration.theme.dimensions.orbExpandedWidth, height: configurationManager.configuration.theme.dimensions.orbExpandedHeight)
             } else {
-                FlowingLinesView(size: configurationManager.configuration.theme.dimensions.orbSize, configuration: configurationManager)
+                FlowingLinesView(size: configurationManager.configuration.theme.dimensions.orbSize, configuration: configurationManager.configuration)
                     .frame(width: configurationManager.configuration.theme.dimensions.orbSize, height: configurationManager.configuration.theme.dimensions.orbSize)
                     .contentShape(Rectangle())
                     .onTapGesture {
@@ -34,7 +34,7 @@ struct OrbView: View {
 
 struct FlowingLinesView: View {
     let size: CGFloat
-    let configuration: ConfigurationManager
+    let configuration: Configuration
     
     @State private var phase: CGFloat = 0
     @State private var breath: CGFloat = 0
@@ -45,8 +45,8 @@ struct FlowingLinesView: View {
             // Premium black gradient background
             LinearGradient(
                 colors: [
-                    Color(hex: configuration.configuration.theme.colors.background).opacity(0.98),
-                    Color(hex: configuration.configuration.theme.colors.background).opacity(0.92)
+                    Color(hex: configuration.theme.colors.background).opacity(0.98),
+                    Color(hex: configuration.theme.colors.background).opacity(0.92)
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -55,7 +55,7 @@ struct FlowingLinesView: View {
             // Subtle ambient glow
             RadialGradient(
                 colors: [
-                    Color(hex: configuration.configuration.theme.colors.primary).opacity(glowIntensity * 0.08),
+                    Color(hex: configuration.theme.colors.primary).opacity(glowIntensity * 0.08),
                     Color.clear
                 ],
                 center: .center,
@@ -75,7 +75,7 @@ struct FlowingLinesView: View {
                         yOffset: CGFloat(index - 1) * 12
                     )
                     .stroke(
-                        Color(hex: configuration.configuration.theme.colors.primary).opacity(0.15 - CGFloat(index) * 0.03),
+                        Color(hex: configuration.theme.colors.primary).opacity(0.15 - CGFloat(index) * 0.03),
                         lineWidth: 2
                     )
                     .blur(radius: 1.5)
@@ -90,7 +90,7 @@ struct FlowingLinesView: View {
                         yOffset: CGFloat(index - 2) * 10
                     )
                     .stroke(
-                        Color(hex: configuration.configuration.theme.colors.primary).opacity(0.5 - CGFloat(index) * 0.07),
+                        Color(hex: configuration.theme.colors.primary).opacity(0.5 - CGFloat(index) * 0.07),
                         lineWidth: 1.8
                     )
                     .blur(radius: 0.8)
@@ -105,7 +105,7 @@ struct FlowingLinesView: View {
                         yOffset: (CGFloat(index) - 0.5) * 15
                     )
                     .stroke(
-                        Color(hex: configuration.configuration.theme.colors.primary).opacity(0.7 - CGFloat(index) * 0.1),
+                        Color(hex: configuration.theme.colors.primary).opacity(0.7 - CGFloat(index) * 0.1),
                         lineWidth: 1.2
                     )
                 }

@@ -17,8 +17,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Initialize Configuration Manager
         configurationManager = ConfigurationManager()
-        let configuration = configurationManager.configuration
-
+        
         // Initialize services and engines
         let ollamaService = OllamaService(configurationManager: configurationManager)
         decisionEngine = DecisionEngine(ollamaService: ollamaService, configurationManager: configurationManager)
@@ -29,7 +28,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         workspaceMonitor = WorkspaceMonitor(
             windowManager: windowManager,
             decisionEngine: decisionEngine,
-            configurationManager: configurationManager
+            configurationManager: configurationManager,
+            accessibilityManager: accessibilityManager
         )
 
         // Check accessibility permissions

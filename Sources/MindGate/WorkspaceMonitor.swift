@@ -6,7 +6,7 @@ import CoreGraphics
 class WorkspaceMonitor {
     private weak var windowManager: WindowManager?
     private weak var decisionEngine: DecisionEngine?
-    private var accessibilityManager: AccessibilityManager!
+    private let accessibilityManager: AccessibilityManager
     private var observer: NSObjectProtocol?
     private var pollTimer: Timer?
     private var lastCheckedApp: NSRunningApplication?
@@ -23,10 +23,10 @@ class WorkspaceMonitor {
     }
     private let logger = Logger(subsystem: "com.mindgate.MindGate", category: "WorkspaceMonitor")
 
-    init(windowManager: WindowManager, decisionEngine: DecisionEngine, configurationManager: ConfigurationManager) {
+    init(windowManager: WindowManager, decisionEngine: DecisionEngine, configurationManager: ConfigurationManager, accessibilityManager: AccessibilityManager) {
         self.windowManager = windowManager
         self.decisionEngine = decisionEngine
-        self.accessibilityManager = AccessibilityManager()
+        self.accessibilityManager = accessibilityManager
         self.configurationManager = configurationManager
         self.fallbackConfiguration = configurationManager.configuration
     }
