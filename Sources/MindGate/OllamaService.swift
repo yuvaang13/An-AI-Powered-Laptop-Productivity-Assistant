@@ -78,7 +78,14 @@ class OllamaService {
     
     func checkConnection() async -> Bool {
         logger.info("Checking Ollama connection...")
-        guard let url = URL(string: configurationManager.configuration.settings.ollamaURL.replacingOccurrences(of: "/api/generate", with: "/api/tags")) else {
+        
+        // Build the tags endpoint URL properly
+        let rawURL = configurationManager.configuration.settings.ollamaURL
+        var tagsURL = rawURL
+        if tagsURL.hasSuffix("/api/generate") {
+            tagsURL = String(tagsURL.dropLast("/api/generate".count))
+        }
+        guard let url = URL(string: "\(tagsURL)/api/tags") else {
             logger.error("Invalid Ollama URL for connection check.")
             return false
         }
