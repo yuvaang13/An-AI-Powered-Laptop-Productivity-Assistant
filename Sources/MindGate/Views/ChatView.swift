@@ -90,6 +90,8 @@ struct ChatView: View {
             startCountdown()
             // Activate the app to enable keyboard input
             NSApp.activate(ignoringOtherApps: true)
+            // Request focus polling from WindowManager
+            windowManager?.requestKeyboardFocus()
         }
         .onDisappear(perform: stopCountdown)
     }

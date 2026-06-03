@@ -195,7 +195,10 @@ class WindowManager: ObservableObject {
         }
 
         presentOrbPanel(panel)
-        startFocusPolling()
+        // Start focus polling after a short delay to allow view to render
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            self.startFocusPolling()
+        }
     }
 
     func hideOrb() {
@@ -215,32 +218,61 @@ class WindowManager: ObservableObject {
 
         if let orbPanel {
             presentOrbPanel(orbPanel)
-            // Start aggressive focus polling
-            startFocusPolling()
         }
+    }
+    
+    func requestKeyboardFocus() {
+        // Trigger focus polling when ChatView appears
+        startFocusPolling()
     }
     
     private func startFocusPolling() {
         focusTimer?.invalidate()
-        focusTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
+        focusTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.pollForFirstResponder()
             }
         }
     }
     
+    private func stopFocusPolling() {
+        focusTimer?.invalidate()
+        focusTimer = nil
+    }
+    
     private func pollForFirstResponder() {
-        guard let panel = orbPanel,
-              let contentView = panel.contentView,
-              let scrollView = contentView.subviews.first(where: { $0 is NSScrollView }),
-              let textView = (scrollView as? NSScrollView)?.documentView as? NSTextView else {
-            return
-        }
+        guard let panel = orbPanel else { return }
         
-        if panel.firstResponder !== textView {
-            panel.makeKey()
-            panel.makeFirstResponder(textView)
+        // Try to find the NSTextView in the view hierarchy
+        let textView = findTextView(in: panel.contentView)
+        
+        if let textView = textView {
+            if panel.firstResponder !== textView {
+                NSApp.activate(ignoringOtherApps: true)
+                panel.makeKeyAndOrderFront(nil)
+                panel.makeFirstResponder(textView)
+            } else {
+                // We have focus, stop polling
+                stopFocusPolling()
+            }
         }
+    }
+    
+    private func findTextView(in view: NSView?) -> NSTextView? {
+        guard let view = view else { return nil }
+        for subview in view.subviews {
+            if let scrollView = subview as? NSScrollView,
+               let textView = scrollView.documentView as? NSTextView {
+                return textView
+            }
+            if let textView = subview as? NSTextView {
+                return textView
+            }
+            if let found = findTextView(in: subview) {
+                return found
+            }
+        }
+        return nil
     }
 
     func collapseOrb() {
