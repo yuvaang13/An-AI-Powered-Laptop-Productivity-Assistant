@@ -5,6 +5,8 @@ struct SettingsView: View {
     @State private var newDistractingApp: String = ""
     @State private var newRestrictedKeyword: String = ""
     @State private var newMonitoredBrowser: String = ""
+    @State private var ollamaURL: String = ""
+    @State private var ollamaModel: String = ""
 
     var body: some View {
         Form {
@@ -57,8 +59,8 @@ struct SettingsView: View {
             }
 
             Section(header: Text("Ollama Configuration")) {
-                TextField("Ollama URL", text: $configurationManager.configuration.settings.ollamaURL)
-                TextField("Ollama Model", text: $configurationManager.configuration.settings.ollamaModel)
+                TextField("Ollama URL", text: $ollamaURL)
+                TextField("Ollama Model", text: $ollamaModel)
             }
 
             Section(header: Text("Access Duration Options")) {
@@ -74,11 +76,17 @@ struct SettingsView: View {
             }
 
             Button("Save Configuration") {
+                configurationManager.configuration.settings.ollamaURL = ollamaURL
+                configurationManager.configuration.settings.ollamaModel = ollamaModel
                 configurationManager.save()
             }
         }
         .padding()
         .frame(width: 600, height: 800)
+        .onAppear {
+            ollamaURL = configurationManager.configuration.settings.ollamaURL
+            ollamaModel = configurationManager.configuration.settings.ollamaModel
+        }
     }
 
     private func addDistractingApp() {

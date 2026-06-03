@@ -1,6 +1,7 @@
 import Foundation
 import AppKit
 import OSLog
+import CoreGraphics
 
 class WorkspaceMonitor {
     private weak var windowManager: WindowManager?
@@ -188,7 +189,7 @@ class WorkspaceMonitor {
 
         Task { @MainActor in
             self.decisionEngine?.setCurrentApp(app)
-            self.windowManager?.targetApp = app // Set target app for overlay positioning
+            self.windowManager?.targetApp = app
             self.windowManager?.showOrb()
         }
     }

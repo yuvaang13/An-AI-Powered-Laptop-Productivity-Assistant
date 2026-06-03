@@ -96,14 +96,15 @@ class WindowManager: ObservableObject {
         )
 
         panel.isFloatingPanel = true
-        panel.level = NSWindow.Level(Int(CGShieldingWindowLevel()))
-        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle]
+        panel.level = .popUpMenu
+        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle, .stationary]
         panel.backgroundColor = NSColor.black
         panel.isOpaque = false
         panel.hasShadow = false
         panel.ignoresMouseEvents = true
         panel.hidesOnDeactivate = false
-        
+        panel.acceptsMouseMovedEvents = false
+
         panel.contentView = overlayHostingController?.view
         panel.contentView?.wantsLayer = true
         panel.contentView?.layer?.backgroundColor = NSColor.black.withAlphaComponent(0.7).cgColor
@@ -326,7 +327,7 @@ class WindowManager: ObservableObject {
     func showOverlay() {
         // Use the captured window frame if available, otherwise try to get it
         let targetFrame: NSRect
-        
+
         if let storedFrame = targetWindowFrame {
             targetFrame = storedFrame
             logger.info("Using captured target window frame: \(targetFrame.debugDescription)")
@@ -342,15 +343,18 @@ class WindowManager: ObservableObject {
             targetFrame = screen?.frame ?? NSRect(x: 0, y: 0, width: 1920, height: 1080)
             logger.warning("No target app, using screen frame: \(targetFrame.debugDescription)")
         }
-        
+
         guard let panel = overlayPanel else {
             logger.error("Overlay panel is nil")
             return
         }
-        
+
         panel.setFrame(targetFrame, display: true)
+        panel.level = .popUpMenu
+        NSApplication.shared.activate(ignoringOtherApps: true)
         panel.orderFrontRegardless()
-        
+        panel.makeKeyAndOrderFront(nil)
+
         isOverlayVisible = true
         logger.info("Overlay is now visible at: \(targetFrame.debugDescription)")
     }
