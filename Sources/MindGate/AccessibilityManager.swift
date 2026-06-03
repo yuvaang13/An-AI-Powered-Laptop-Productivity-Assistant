@@ -28,7 +28,7 @@ class AccessibilityManager {
         let result = NSAppleScript(source: script)?.executeAndReturnError(&error)
 
         if let error {
-            logger.debug("Could not read browser URL for \(application.localizedName ?? "Unknown"): \(error)")
+            logger.error("❌ AccessibilityManager: Could not read browser URL for \(application.localizedName ?? "Unknown"): \(error)")
         }
 
         return result?.stringValue
@@ -64,9 +64,13 @@ class AccessibilityManager {
 
         logger.debug("🔧 AXUIElementCopyAttributeValue result: \(result.rawValue)")
 
-        guard result == .success,
-              let windows = windowsRef as? [AXUIElement] else {
-            logger.error("❌ Failed to get windows or windows array is empty for app: \(application.localizedName ?? "Unknown")")
+        guard result == .success else {
+            logger.error("❌ AccessibilityManager: AXUIElementCopyAttributeValue failed with error \(result.rawValue) for app: \(application.localizedName ?? "Unknown")")
+            return []
+        }
+        
+        guard let windows = windowsRef as? [AXUIElement] else {
+            logger.error("❌ AccessibilityManager: Could not cast windowsRef to [AXUIElement] for app: \(application.localizedName ?? "Unknown")")
             return []
         }
 

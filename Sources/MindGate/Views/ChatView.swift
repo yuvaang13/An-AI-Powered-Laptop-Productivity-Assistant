@@ -338,6 +338,15 @@ struct ChatView: View {
         isLoading = true
 
         Task { @MainActor in
+            // Check Ollama connection first
+            let isOllamaRunning = await decisionEngine.checkOllamaConnection()
+            if !isOllamaRunning {
+                isLoading = false
+                aiResponse = "Ollama is not running. Please start Ollama to continue."
+                showDeniedMessage = true
+                return
+            }
+
             do {
                 let result = try await decisionEngine.evaluateRequest(userInput: userInput)
 

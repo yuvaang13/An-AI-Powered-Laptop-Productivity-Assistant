@@ -48,7 +48,7 @@ class WindowManager: ObservableObject {
         let orbView = OrbView(
             windowManager: self,
             decisionEngine: decisionEngine,
-            configuration: configurationManager.configuration,
+            configurationManager: configurationManager,
             isExpanded: isOrbExpanded
         )
 
@@ -138,7 +138,7 @@ class WindowManager: ObservableObject {
         orbHostingController?.rootView = OrbView(
             windowManager: self,
             decisionEngine: decisionEngine,
-            configuration: configurationManager.configuration,
+            configurationManager: configurationManager,
             isExpanded: isOrbExpanded
         )
         orbHostingController?.view.frame = NSRect(

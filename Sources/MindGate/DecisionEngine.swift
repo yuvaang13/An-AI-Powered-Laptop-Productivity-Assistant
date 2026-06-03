@@ -21,6 +21,10 @@ class DecisionEngine {
         self.configurationManager = configurationManager
     }
 
+    func checkOllamaConnection() async -> Bool {
+        return await ollamaService.checkConnection()
+    }
+
     func setCurrentApp(_ app: NSRunningApplication) {
         self.currentApp = app
     }
