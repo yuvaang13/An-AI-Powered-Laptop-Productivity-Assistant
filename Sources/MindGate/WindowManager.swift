@@ -29,6 +29,8 @@ class WindowManager: ObservableObject {
     private let logger = Logger(subsystem: "com.mindgate.MindGate", category: "WindowManager")
     private var focusTimer: Timer?
     weak var targetApp: NSRunningApplication?
+    
+    private var targetWindowFrame: NSRect?
 
     @Published var isOrbExpanded = false
     @Published var isOverlayVisible = false
@@ -199,6 +201,15 @@ class WindowManager: ObservableObject {
         logger.info("🔮 Showing Orb...")
         isDistractionDetected = true
         isOrbExpanded = true
+        
+        // Capture the target window frame at distraction time
+        if let app = targetApp {
+            targetWindowFrame = getTargetAppWindowFrame(app: app)
+        }
+        if let storedFrame = targetWindowFrame {
+            logger.info("Captured target window frame at distraction time: \(storedFrame.debugDescription)")
+        }
+        
         refreshOrbView()
         positionOrbPanel()
 
@@ -217,6 +228,7 @@ class WindowManager: ObservableObject {
         orbPanel?.orderOut(nil)
         isOrbExpanded = false
         isDistractionDetected = false
+        targetWindowFrame = nil
         refreshOrbView()
         focusTimer?.invalidate()
         focusTimer = nil
@@ -312,15 +324,24 @@ class WindowManager: ObservableObject {
 
     // MARK: - Overlay Control
     func showOverlay() {
-        guard let targetApp = targetApp else { 
-            logger.error("No target app set for overlay")
-            return 
-        }
+        // Use the captured window frame if available, otherwise try to get it
+        let targetFrame: NSRect
         
-        // Get the target app window frame directly - don't rely on mouse location
-        // since the orb may be capturing mouse events
-        let targetFrame = getTargetAppWindowFrame(app: targetApp)
-        logger.info("Showing overlay over target app window frame: \(targetFrame.debugDescription)")
+        if let storedFrame = targetWindowFrame {
+            targetFrame = storedFrame
+            logger.info("Using captured target window frame: \(targetFrame.debugDescription)")
+        } else if let targetApp = targetApp {
+            targetFrame = getTargetAppWindowFrame(app: targetApp)
+            logger.info("Using fresh app window frame: \(targetFrame.debugDescription)")
+        } else {
+            // Fallback to screen
+            let mouseLocation = NSEvent.mouseLocation
+            let screen = NSScreen.screens.first { screen in
+                NSMouseInRect(mouseLocation, screen.frame, false)
+            } ?? NSScreen.main ?? NSScreen.screens.first
+            targetFrame = screen?.frame ?? NSRect(x: 0, y: 0, width: 1920, height: 1080)
+            logger.warning("No target app, using screen frame: \(targetFrame.debugDescription)")
+        }
         
         guard let panel = overlayPanel else {
             logger.error("Overlay panel is nil")
