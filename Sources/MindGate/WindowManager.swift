@@ -218,6 +218,10 @@ class WindowManager: ObservableObject {
 
         if let orbPanel {
             presentOrbPanel(orbPanel)
+            // Start focus polling after a short delay to allow view to render
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                self.startFocusPolling()
+            }
         }
     }
     
@@ -243,14 +247,17 @@ class WindowManager: ObservableObject {
     private func pollForFirstResponder() {
         guard let panel = orbPanel else { return }
         
-        // Try to find the NSTextView in the view hierarchy
-        let textView = findTextView(in: panel.contentView)
+        // Find the NSTextView recursively
+        let textView = findTextViewRecursively(in: panel.contentView)
         
         if let textView = textView {
             if panel.firstResponder !== textView {
                 NSApp.activate(ignoringOtherApps: true)
                 panel.makeKeyAndOrderFront(nil)
-                panel.makeFirstResponder(textView)
+                // Try to make first responder directly
+                if !textView.becomeFirstResponder() {
+                    panel.makeFirstResponder(textView)
+                }
             } else {
                 // We have focus, stop polling
                 stopFocusPolling()
@@ -258,20 +265,36 @@ class WindowManager: ObservableObject {
         }
     }
     
-    private func findTextView(in view: NSView?) -> NSTextView? {
+    private func findTextViewRecursively(in view: NSView?) -> NSTextView? {
         guard let view = view else { return nil }
+        
+        // Check for NSScrollView with NSTextView document
+        if let scrollView = view as? NSScrollView {
+            return scrollView.documentView as? NSTextView ?? findTextViewRecursively(in: scrollView.contentView)
+        }
+        
+        // Check if this view itself is an NSTextView
+        if let textView = view as? NSTextView {
+            return textView
+        }
+        
+        // Check NSHostingView via Objective-C runtime
+        if view.isMember(of: NSClassFromString("NSHostingView") ?? NSView.self) {
+            // NSHostingView stores its content in _contentView or similar
+            for subview in view.subviews {
+                if let found = findTextViewRecursively(in: subview) {
+                    return found
+                }
+            }
+        }
+        
+        // Recursively search subviews
         for subview in view.subviews {
-            if let scrollView = subview as? NSScrollView,
-               let textView = scrollView.documentView as? NSTextView {
-                return textView
-            }
-            if let textView = subview as? NSTextView {
-                return textView
-            }
-            if let found = findTextView(in: subview) {
+            if let found = findTextViewRecursively(in: subview) {
                 return found
             }
         }
+        
         return nil
     }
 
