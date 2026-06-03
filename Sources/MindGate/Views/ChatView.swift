@@ -14,6 +14,7 @@ struct ChatView: View {
     @State private var showTakeoverView: Bool = false // New state for takeover view
     @State private var countdownSeconds: Int = 20 // Initial countdown time
     @State private var timer: Timer? // Timer instance
+    @State private var hasSubmitted: Bool = false // Track if user submitted once
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
@@ -203,10 +204,15 @@ struct ChatView: View {
                 .tracking(0.2)
 
             Button(action: {
-                windowManager?.collapseOrb()
-                resetState()
+                if showDeniedMessage {
+                    // Allow retry - reset for continued chat with gemma3:1b
+                    resetStateWithRetry()
+                } else {
+                    windowManager?.collapseOrb()
+                    resetState()
+                }
             }) {
-                Label("Close", systemImage: "checkmark")
+                Label(showDeniedMessage ? "Try Again" : "Close", systemImage: showDeniedMessage ? "arrow.clockwise" : "checkmark")
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
             }
             .buttonStyle(MinimalActionButtonStyle(configuration: configuration))
@@ -341,17 +347,21 @@ struct ChatView: View {
                 if result.isApproved {
                     showDurationSelection = true
                 } else {
-                    showTakeoverView = true // Show takeover view on denial
-
-                    // Trigger overlay and close app/tab after delay
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    // Show overlay on YouTube window but keep orb visible for continued chat
+                    showDeniedMessage = true
+                    
+                    // Trigger overlay on target app window
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                         windowManager?.showOverlay()
-                        decisionEngine.closeCurrentAppOrTab()
-
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                        
+                        // Close tab after overlay shows
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                            decisionEngine.closeCurrentAppOrTab()
+                        }
+                        
+                        // Hide overlay after delay but keep orb for continued interaction
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
                             windowManager?.hideOverlay()
-                            windowManager?.hideOrb()
-                            resetState()
                         }
                     }
                 }
@@ -379,6 +389,20 @@ struct ChatView: View {
         showTakeoverView = false // Reset takeover view state
         countdownSeconds = 20 // Reset countdown
         stopCountdown() // Stop any active timer
+        hasSubmitted = false
+    }
+    
+    private func resetStateWithRetry() {
+        userInput = ""
+        aiResponse = ""
+        isLoading = false
+        showDurationSelection = false
+        showDeniedMessage = false
+        showTakeoverView = false
+        countdownSeconds = 20
+        stopCountdown()
+        startCountdown()
+        // Keep orb visible and allow continued chat with AI
     }
 
     private func startCountdown() {
@@ -407,13 +431,11 @@ struct ChatView: View {
             Task { @MainActor in
                 isLoading = false
                 aiResponse = "Time's up! Access denied."
-                showTakeoverView = true // Show takeover view on denial
+                showDeniedMessage = true
                 windowManager?.showOverlay()
                 decisionEngine.closeCurrentAppOrTab()
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                     windowManager?.hideOverlay()
-                    windowManager?.hideOrb()
-                    resetState()
                 }
             }
         }
