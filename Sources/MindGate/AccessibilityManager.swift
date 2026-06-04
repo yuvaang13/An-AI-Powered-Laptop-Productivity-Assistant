@@ -2,6 +2,7 @@ import Foundation
 import ApplicationServices
 import AppKit
 import OSLog
+import CoreGraphics
 
 class AccessibilityManager {
     private let logger = Logger(subsystem: "com.mindgate.MindGate", category: "AccessibilityManager")
@@ -97,6 +98,29 @@ class AccessibilityManager {
         let result = AXUIElementCopyAttributeValue(appElement, kAXWindowsAttribute as CFString, &windowsRef)
 
         return result == .success
+    }
+
+    func getFallbackWindowFrame(for application: NSRunningApplication) -> NSRect? {
+        guard let windowList = CGWindowListCreateDescriptionFromArray(nil) else {
+            return nil
+        }
+
+        let windows = windowList as NSArray as? [NSDictionary] ?? []
+        let appPID = application.processIdentifier
+
+        for window in windows where window["ownerPID"] as? pid_t == appPID {
+            guard let boundsDict = window["bounds"] as? [String: NSNumber],
+                  let layer = window["layer"] as? Int,
+                  layer == 0 else { continue }
+
+            let x = boundsDict["X"]?.doubleValue ?? 0
+            let y = boundsDict["Y"]?.doubleValue ?? 0
+            let width = boundsDict["Width"]?.doubleValue ?? 0
+            let height = boundsDict["Height"]?.doubleValue ?? 0
+            return NSRect(x: x, y: y, width: width, height: height)
+        }
+
+        return nil
     }
 
     private func browserURLScript(for application: NSRunningApplication) -> String? {

@@ -98,12 +98,13 @@ class WindowManager: ObservableObject {
         )
 
         panel.isFloatingPanel = true
-        panel.level = .popUpMenu
+        panel.level = .screenSaver
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle, .stationary]
         panel.backgroundColor = NSColor.black
         panel.isOpaque = false
         panel.hasShadow = false
         panel.ignoresMouseEvents = true
+        panel.isExcludedFromWindowsMenu = true
         panel.hidesOnDeactivate = false
         panel.acceptsMouseMovedEvents = false
 
@@ -207,7 +208,7 @@ class WindowManager: ObservableObject {
         
         // Capture the target window frame at distraction time
         if let app = targetApp {
-            targetWindowFrame = getTargetAppWindowFrame(app: app)
+            targetWindowFrame = getTargetAppWindowFrameWithFallback(app: app)
         }
         if let storedFrame = targetWindowFrame {
             logger.info("Captured target window frame at distraction time: \(storedFrame.debugDescription)")
@@ -346,7 +347,7 @@ class WindowManager: ObservableObject {
             targetFrame = storedFrame
             logger.info("Using captured target window frame: \(targetFrame.debugDescription)")
         } else if let targetApp = targetApp {
-            targetFrame = getTargetAppWindowFrame(app: targetApp)
+            targetFrame = getTargetAppWindowFrameWithFallback(app: targetApp)
             logger.info("Using fresh app window frame: \(targetFrame.debugDescription)")
         } else {
             // Fallback to screen
@@ -364,16 +365,17 @@ class WindowManager: ObservableObject {
         }
 
         panel.setFrame(targetFrame, display: true)
-        panel.level = .popUpMenu
-        NSApplication.shared.activate(ignoringOtherApps: true)
+        NSApp.activate(ignoringOtherApps: true)
         panel.orderFrontRegardless()
         panel.makeKeyAndOrderFront(nil)
+        panel.makeMain()
+        panel.displayIfNeeded()
 
         isOverlayVisible = true
-        logger.info("Overlay is now visible at: \(targetFrame.debugDescription)")
+        logger.info("Overlay visibility check: isVisible=\(panel.isVisible), frame=\(panel.frame.debugDescription), screenCount=\(NSScreen.screens.count)")
     }
     
-    private func getTargetAppWindowFrame(app: NSRunningApplication) -> NSRect {
+    private func getTargetAppWindowFrame(app: NSRunningApplication) -> NSRect? {
         let appElement = AXUIElementCreateApplication(app.processIdentifier)
         
         // First try to get the main window
@@ -471,6 +473,64 @@ class WindowManager: ObservableObject {
         } ?? NSScreen.main ?? NSScreen.screens.first
         
         logger.warning("Could not get window frame, using screen frame: \(screen?.frame.debugDescription ?? "nil")")
+        return screen?.frame ?? NSRect(x: 0, y: 0, width: 1920, height: 1080)
+    }
+
+    private func getTargetAppWindowFrameCG(app: NSRunningApplication) -> NSRect? {
+        guard let windowList = CGWindowListCreateDescriptionFromArray(nil) else {
+            return nil
+        }
+
+        let windows = windowList as NSArray as? [NSDictionary] ?? []
+        let appPID = app.processIdentifier
+        let mouseLocation = NSEvent.mouseLocation
+
+        for window in windows where window["ownerPID"] as? pid_t == appPID {
+            guard let boundsDict = window["bounds"] as? [String: NSNumber],
+                  let layer = window["layer"] as? Int,
+                  layer >= 0 else { continue }
+
+            let x = boundsDict["X"]?.doubleValue ?? 0
+            let y = boundsDict["Y"]?.doubleValue ?? 0
+            let width = boundsDict["Width"]?.doubleValue ?? 0
+            let height = boundsDict["Height"]?.doubleValue ?? 0
+            let windowFrame = NSRect(x: x, y: y, width: width, height: height)
+
+            if layer == 0 && NSMouseInRect(mouseLocation, windowFrame, false) {
+                logger.info("CGWindow found matching window at: \(windowFrame.debugDescription)")
+                return windowFrame
+            }
+        }
+
+        for window in windows where window["ownerPID"] as? pid_t == appPID {
+            guard let layer = window["layer"] as? Int,
+                  layer == 0,
+                  let boundsDict = window["bounds"] as? [String: NSNumber] else { continue }
+
+            let x = boundsDict["X"]?.doubleValue ?? 0
+            let y = boundsDict["Y"]?.doubleValue ?? 0
+            let width = boundsDict["Width"]?.doubleValue ?? 0
+            let height = boundsDict["Height"]?.doubleValue ?? 0
+            return NSRect(x: x, y: y, width: width, height: height)
+        }
+
+        return nil
+    }
+
+    private func getTargetAppWindowFrameWithFallback(app: NSRunningApplication) -> NSRect {
+        if let axFrame = getTargetAppWindowFrame(app: app) {
+            return axFrame
+        }
+
+        if let cgFrame = getTargetAppWindowFrameCG(app: app) {
+            return cgFrame
+        }
+
+        let mouseLocation = NSEvent.mouseLocation
+        let screen = NSScreen.screens.first { screen in
+            NSMouseInRect(mouseLocation, screen.frame, false)
+        } ?? NSScreen.main ?? NSScreen.screens.first
+
         return screen?.frame ?? NSRect(x: 0, y: 0, width: 1920, height: 1080)
     }
 
