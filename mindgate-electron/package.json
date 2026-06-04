@@ -4,26 +4,31 @@
   "description": "Cross-platform MindGate productivity app",
   "main": "main.ts",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently \"npm run dev:renderer\" \"npm run dev:main\"",
+    "dev:main": "wait-on http://localhost:3000 && electron .",
+    "dev:renderer": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "dist": "electron-builder"
+    "dist": "npm run build && electron-builder",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts,.tsx"
   },
   "dependencies": {
     "electron": "^28.0.0",
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0",
     "framer-motion": "^10.0.0",
-    "electron-store": "^9.0.0",
-    "styled-components": "^6.0.0"
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
   },
   "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "@vitejs/plugin-react": "^4.0.0",
+    "concurrently": "^8.0.0",
     "electron-builder": "^24.0.0",
     "typescript": "^5.0.0",
-    "@vitejs/plugin-react": "^4.0.0",
     "vite": "^5.0.0",
-    "@types/react": "^18.0.0",
-    "@types/react-dom": "^18.0.0"
+    "wait-on": "^7.0.0"
   },
   "build": {
     "appId": "com.mindgate.electron",

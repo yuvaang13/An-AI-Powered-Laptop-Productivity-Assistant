@@ -1,5 +1,6 @@
 import { BrowserWindow, screen } from 'electron';
-import { Configuration, ActiveWindowInfo } from '../types';
+import type { Configuration, ActiveWindowInfo } from '../types';
+import { SystemMonitor } from './platformWrapper';
 
 export class WindowManager {
   private orbWindow: BrowserWindow | null = null;
@@ -7,7 +8,8 @@ export class WindowManager {
   private mainWindow: BrowserWindow | null = null;
   private configuration: Configuration;
   private isOrbExpanded = false;
-  private targetWindow: ActiveWindowInfo | null = null;
+  private targetApp: ActiveWindowInfo | null = null;
+  private targetWindowFrame: ActiveWindowInfo['frame'] | null = null;
 
   constructor(configuration: Configuration) {
     this.configuration = configuration;
@@ -17,17 +19,40 @@ export class WindowManager {
     this.mainWindow = window;
   }
 
+  setOrbWindow(window: BrowserWindow) {
+    this.orbWindow = window;
+  }
+
+  setOverlayWindow(window: BrowserWindow) {
+    this.overlayWindow = window;
+  }
+
   setTargetWindow(window: ActiveWindowInfo | null) {
-    this.targetWindow = window;
+    this.targetApp = window;
+    if (window) {
+      this.targetWindowFrame = window.frame;
+    }
+  }
+
+  getTargetApp(): ActiveWindowInfo | null {
+    return this.targetApp;
+  }
+
+  getOrbSize(): number {
+    return this.configuration.theme.dimensions.orbSize;
+  }
+
+  getOrbXOffset(): number {
+    return this.configuration.theme.dimensions.orbXOffset;
   }
 
   createOrbWindow(): BrowserWindow {
     const primaryDisplay = screen.getPrimaryDisplay();
-    const { x, y } = this.getOrbPosition(primaryDisplay);
+    const { bounds } = primaryDisplay;
 
     this.orbWindow = new BrowserWindow({
-      x,
-      y,
+      x: Math.round(bounds.x + this.configuration.theme.dimensions.orbXOffset),
+      y: Math.round(bounds.y + bounds.height - this.configuration.theme.dimensions.orbSize - this.configuration.theme.dimensions.orbYOffset - 100),
       width: this.configuration.theme.dimensions.orbSize,
       height: this.configuration.theme.dimensions.orbSize,
       transparent: true,
@@ -65,32 +90,25 @@ export class WindowManager {
     });
 
     this.overlayWindow.setIgnoreMouseEvents(true);
+    this.overlayWindow.setOpacity(0.85);
     return this.overlayWindow;
   }
 
-  private getOrbPosition(display: Electron.Display): { x: number; y: number } {
-    const { visibleArea } = display;
-    const offset = this.configuration.theme.dimensions.orbDistractionOffset;
-    
-    return {
-      x: visibleArea.x + this.configuration.theme.dimensions.orbXOffset + offset,
-      y: visibleArea.y + visibleArea.height - this.configuration.theme.dimensions.orbSize - this.configuration.theme.dimensions.orbYOffset - 100
-    };
-  }
-
-  async showOrb(targetWindow?: ActiveWindowInfo) {
-    this.targetWindow = targetWindow ?? null;
+  showOrb(targetWindow?: ActiveWindowInfo) {
     this.isOrbExpanded = true;
-    
+
+    if (targetWindow && targetWindow.frame.width > 0) {
+      this.targetWindowFrame = targetWindow.frame;
+    }
+
     if (!this.orbWindow) {
       this.createOrbWindow();
     }
-    
-    if (this.targetWindow && this.targetWindow.frame.width > 0) {
-      const frame = this.targetWindow.frame;
+
+    if (this.targetWindowFrame && this.targetWindowFrame.width > 0) {
       this.orbWindow?.setPosition(
-        Math.round(frame.x + frame.width - this.configuration.theme.dimensions.orbExpandedWidth - this.configuration.theme.dimensions.orbXOffset),
-        Math.round(frame.y + this.configuration.theme.dimensions.orbYOffset)
+        Math.round(this.targetWindowFrame.x + this.targetWindowFrame.width - this.configuration.theme.dimensions.orbExpandedWidth - this.configuration.theme.dimensions.orbXOffset),
+        Math.round(this.targetWindowFrame.y + this.configuration.theme.dimensions.orbYOffset)
       );
     }
 
@@ -104,42 +122,60 @@ export class WindowManager {
 
   hideOrb() {
     this.isOrbExpanded = false;
-    if (this.orbWindow) {
-      this.orbWindow.setSize(
-        this.configuration.theme.dimensions.orbSize,
-        this.configuration.theme.dimensions.orbSize
-      );
-      this.orbWindow.hide();
-    }
+    this.orbWindow?.setSize(
+      this.configuration.theme.dimensions.orbSize,
+      this.configuration.theme.dimensions.orbSize
+    );
+    this.orbWindow?.hide();
   }
 
   showOverlay(targetWindow?: ActiveWindowInfo) {
-    const window = targetWindow ?? this.targetWindow;
-    if (!window || !window.frame) {
-      return;
-    }
-
-    const frame = window.frame;
-    if (!frame.width || !frame.height) {
+    const window = targetWindow ?? this.targetApp;
+    if (!window || !window.frame || window.frame.width === 0) {
       return;
     }
 
     if (!this.overlayWindow) {
-      this.createOverlayWindow(frame);
+      this.createOverlayWindow(window.frame);
     } else {
-      this.overlayWindow.setPosition(Math.round(frame.x), Math.round(frame.y));
-      this.overlayWindow.setSize(Math.round(frame.width), Math.round(frame.height));
+      this.overlayWindow.setPosition(Math.round(window.frame.x), Math.round(window.frame.y));
+      this.overlayWindow.setSize(Math.round(window.frame.width), Math.round(window.frame.height));
     }
     this.overlayWindow?.show();
+    this.orbWindow?.webContents.send('show-overlay');
   }
 
   hideOverlay() {
     this.overlayWindow?.hide();
+    this.orbWindow?.webContents.send('hide-overlay');
+  }
+
+  async closeDistraction(app: ActiveWindowInfo) {
+    const monitor = new SystemMonitor();
+    await monitor.initialize();
+
+    const isBrowser = this.configuration.settings.monitoredBrowsers.some(browser =>
+      app.processName.toLowerCase().includes(browser.toLowerCase())
+    );
+
+    if (isBrowser) {
+      const identifier = app.bundleID || app.exeName || '';
+      await monitor.closeBrowserTab(identifier);
+    } else {
+      await monitor.hideApplication(app.processName);
+    }
+
+    this.hideOrb();
+    this.hideOverlay();
   }
 
   grantAccess(duration: number) {
     setTimeout(() => {
       this.hideOrb();
     }, duration * 1000);
+  }
+
+  updateConfiguration(config: Configuration) {
+    this.configuration = config;
   }
 }

@@ -15,22 +15,41 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ configuration, onS
   const [showDurationSelection, setShowDurationSelection] = useState(false);
   const [showDeniedMessage, setShowDeniedMessage] = useState(false);
   const [countdownSeconds, setCountdownSeconds] = useState(0);
+  const [showTakeoverView, setShowTakeoverView] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
       if (countdownSeconds > 0) {
         setCountdownSeconds(s => s - 1);
+      } else if (countdownSeconds === 0 && !isLoading && !showDurationSelection && !showDeniedMessage && !aiResponse && userInput === '') {
+        handleCountdownExpired();
       }
     }, 1000);
     return () => clearInterval(timer);
-  }, [countdownSeconds]);
+  }, [countdownSeconds, isLoading, showDurationSelection, showDeniedMessage, aiResponse, userInput]);
+
+  useEffect(() => {
+    startCountdown();
+  }, []);
 
   const handleSubmit = async () => {
     if (!userInput.trim() || isLoading) return;
-    
+
     setIsLoading(true);
-    const result = await onSubmit(userInput);
-    if (!result?.isApproved) {
+    try {
+      const result = await onSubmit(userInput);
+      if (!result) {
+        setAiResponse('No response received');
+        setShowDeniedMessage(true);
+      } else if (result.isApproved) {
+        setAiResponse(result.message);
+        setShowDurationSelection(true);
+      } else {
+        setAiResponse(result.message);
+        setShowDeniedMessage(true);
+      }
+    } catch (error) {
+      setAiResponse('Error: Unable to get AI response');
       setShowDeniedMessage(true);
     }
     setIsLoading(false);
@@ -40,9 +59,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ configuration, onS
     setCountdownSeconds(configuration.settings.justificationCountdownDuration);
   };
 
-  React.useEffect(() => {
-    startCountdown();
-  }, []);
+  const handleCountdownExpired = () => {
+    setAiResponse("Time's up! Access denied.");
+    setShowDeniedMessage(true);
+    window.mindgateAPI.closeDistraction();
+    setTimeout(() => {
+      onClose();
+    }, 2000);
+  };
 
   const headlineText = () => {
     if (showDurationSelection) return 'Access granted';
@@ -50,6 +74,23 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ configuration, onS
     if (isLoading) return 'Checking with AI';
     if (countdownSeconds > 0) return `Why are you here? (${countdownSeconds}s)`;
     return 'Why are you here?';
+  };
+
+  const selectDuration = (index: number) => {
+    const duration = configuration.settings.accessDurations[index];
+    window.mindgateAPI.grantAccess(index);
+    onClose();
+    resetState();
+  };
+
+  const resetState = () => {
+    setUserInput('');
+    setAiResponse('');
+    setIsLoading(false);
+    setShowDurationSelection(false);
+    setShowDeniedMessage(false);
+    setShowTakeoverView(false);
+    setCountdownSeconds(0);
   };
 
   return (
@@ -67,7 +108,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ configuration, onS
         display: 'flex',
         flexDirection: 'column',
         gap: 8,
-        position: 'relative'
+        position: 'relative',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)'
       }}
     >
       <button
@@ -122,15 +165,54 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ configuration, onS
               exit={{ opacity: 0 }}
               style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 12 }}
             >
-              <div style={{
-                width: 20,
-                height: 20,
-                border: `2px solid ${configuration.theme.colors.warning}`,
-                borderTopColor: 'transparent',
-                borderRadius: '50%',
-                animation: 'spin 1s linear infinite'
-              }} />
+              <div
+                style={{
+                  width: 20,
+                  height: 20,
+                  border: `2px solid ${configuration.theme.colors.warning}`,
+                  borderTopColor: 'transparent',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite'
+                }}
+              />
               <p style={{ color: 'rgba(255,255,255,0.7)', margin: 0 }}>AI is thinking...</p>
+            </motion.div>
+          ) : showDurationSelection ? (
+            <motion.div
+              key="duration"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
+            >
+              <p style={{
+                fontSize: 13,
+                color: 'rgba(255,255,255,0.68)',
+                textAlign: 'center',
+                margin: 0
+              }}>
+                Choose duration:
+              </p>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {configuration.settings.accessDurationLabels.map((label, index) => (
+                  <button
+                    key={index}
+                    onClick={() => selectDuration(index)}
+                    style={{
+                      flex: 1,
+                      padding: '8px 0',
+                      borderRadius: 16,
+                      background: 'linear-gradient(135deg, rgba(255,255,255,0.35), rgba(255,255,255,0.25))',
+                      border: 'none',
+                      color: 'white',
+                      cursor: 'pointer',
+                      fontSize: 13
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
             </motion.div>
           ) : aiResponse ? (
             <motion.div
@@ -144,14 +226,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ configuration, onS
               <button
                 onClick={() => {
                   if (showDeniedMessage) {
-                    setAiResponse('');
-                    setShowDeniedMessage(false);
+                    resetState();
                     startCountdown();
                   } else {
                     onClose();
-                    setAiResponse('');
-                    setShowDeniedMessage(false);
-                    setUserInput('');
+                    resetState();
                   }
                 }}
                 style={{
@@ -217,7 +296,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ configuration, onS
                     width: 34,
                     height: 34,
                     borderRadius: '50%',
-                    background: userInput.trim() 
+                    background: userInput.trim()
                       ? 'linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7))'
                       : 'linear-gradient(135deg, rgba(255,255,255,0.25), rgba(255,255,255,0.15))',
                     border: 'none',

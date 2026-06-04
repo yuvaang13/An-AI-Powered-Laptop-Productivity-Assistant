@@ -56,6 +56,8 @@ export interface DecisionResult {
 export interface ActiveWindowInfo {
   processName: string;
   windowTitle: string;
+  bundleID?: string;
+  exeName?: string;
   frame: {
     x: number;
     y: number;

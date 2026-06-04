@@ -21,7 +21,7 @@ export class OllamaService {
     }
   }
 
-  async evaluateRequest(userInput: string): Promise<DecisionResult> {
+async evaluateRequest(userInput: string): Promise<DecisionResult> {
     try {
       const response = await fetch(this.baseURL, {
         method: 'POST',
@@ -49,7 +49,7 @@ export class OllamaService {
           message: parsed.message ?? 'Unable to determine approval'
         };
       } catch {
-        const isApproved = responseText.toLowerCase().includes('approved') || 
+        const isApproved = responseText.toLowerCase().includes('approved') ||
                           responseText.toLowerCase().includes('valid');
         return {
           isApproved,
@@ -62,6 +62,36 @@ export class OllamaService {
         isApproved: false,
         message: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`
       };
+    }
+  }
+
+  async generateRawResponse(prompt: string): Promise<string> {
+    try {
+      const response = await fetch(this.baseURL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: this.model,
+          prompt,
+          stream: false,
+          options: {
+            temperature: 0.7,
+            top_p: 0.9
+          }
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return (data.response || '').trim();
+    } catch (error) {
+      console.error('Ollama raw request failed:', error);
+      throw error;
     }
   }
 }

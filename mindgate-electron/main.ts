@@ -1,64 +1,62 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, Tray, screen, Menu, nativeImage } from 'electron';
 import { join } from 'path';
-import { WindowManager } from './src/services/windowManager';
+import { ConfigurationService } from './src/services/configurationService';
+import { DecisionEngine } from './src/services/decisionEngine';
 import { WorkspaceMonitor } from './src/services/workspaceMonitor';
-import { OllamaService } from './src/services/ollamaService';
-import { Configuration } from './src/types';
+import { WindowManager } from './src/services/windowManager';
+import { SystemMonitor } from './src/services/platformWrapper';
+import type { ActiveWindowInfo, Configuration } from './src/types';
 
-const configuration: Configuration = {
-  settings: {
-    distractingApps: ['Discord', 'Slack', 'Twitter', 'Telegram', 'Reddit'],
-    restrictedKeywords: ['youtube', 'twitter', 'facebook', 'instagram'],
-    monitoredBrowsers: ['Safari', 'Google Chrome', 'Firefox', 'Brave', 'Microsoft Edge'],
-    ollamaURL: 'http://localhost:11434/api/generate',
-    ollamaModel: 'gemma3:1b',
-    accessDurations: [300, 600, 900],
-    accessDurationLabels: ['5 Mins', '10 Mins', '15 Mins'],
-    productiveTasks: ['Review tasks', 'Plan next steps'],
-    productiveApps: ['Notes', 'Calendar'],
-    justificationCountdownDuration: 15
-  },
-  theme: {
-    colors: {
-      primary: '#FFFFFF',
-      secondary: '#FFFFFFB3',
-      accent: '#FFFFFF99',
-      background: '#000000',
-      surface: '#000000',
-      text: '#FFFFFF',
-      textSecondary: '#FFFFFFB3',
-      error: '#FF453A',
-      warning: '#FF9F0A'
-    },
-    animation: {
-      orbBreathingDuration: 3.0,
-      orbTransitionDuration: 0.3,
-      overlayFadeDuration: 0.5
-    },
-    dimensions: {
-      orbSize: 60,
-      orbExpandedWidth: 380,
-      orbExpandedHeight: 380,
-      chatCornerRadius: 180,
-      orbXOffset: 12,
-      orbYOffset: 12,
-      orbDistractionOffset: 50
-    }
-  }
-};
-
-const windowManager = new WindowManager(configuration);
-const workspaceMonitor = new WorkspaceMonitor(configuration);
-const ollamaService = new OllamaService(configuration.settings.ollamaURL, configuration.settings.ollamaModel);
-
-let mainWindow: BrowserWindow | null = null;
+let configurationService: ConfigurationService;
+let decisionEngine: DecisionEngine;
+let workspaceMonitor: WorkspaceMonitor;
+let windowManager: WindowManager;
+let systemMonitor: SystemMonitor;
+let tray: Tray | null = null;
 let orbWindow: BrowserWindow | null = null;
 let overlayWindow: BrowserWindow | null = null;
+let settingsWindow: BrowserWindow | null = null;
 
-function createWindow() {
-  mainWindow = new BrowserWindow({
-    width: 400,
-    height: 600,
+async function initialize() {
+  configurationService = new ConfigurationService();
+
+  systemMonitor = new SystemMonitor();
+  await systemMonitor.initialize();
+
+  decisionEngine = new DecisionEngine(configurationService.getConfiguration());
+  windowManager = new WindowManager(configurationService.getConfiguration());
+
+  workspaceMonitor = new WorkspaceMonitor(
+    configurationService.getConfiguration(),
+    systemMonitor
+  );
+
+  createWindows();
+  setupIPC();
+  setupEventHandlers();
+  createTray();
+}
+
+function createWindows() {
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { bounds } = primaryDisplay;
+  const config = configurationService.getConfiguration();
+
+  orbWindow = new BrowserWindow({
+    x: Math.round(bounds.x + config.theme.dimensions.orbXOffset),
+    y: Math.round(bounds.y + bounds.height - config.theme.dimensions.orbSize - config.theme.dimensions.orbYOffset - 100),
+    width: config.theme.dimensions.orbSize,
+    height: config.theme.dimensions.orbSize,
+    transparent: true,
+    frame: false,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    resizable: false,
+    movable: false,
+    hasShadow: false,
+    focusable: true,
+    minimizable: false,
+    maximizable: false,
     webPreferences: {
       preload: join(__dirname, '../preload.js'),
       contextIsolation: true,
@@ -66,53 +64,145 @@ function createWindow() {
     }
   });
 
+  windowManager.setOrbWindow(orbWindow);
+
+  overlayWindow = new BrowserWindow({
+    x: 0,
+    y: 0,
+    width: 100,
+    height: 100,
+    transparent: true,
+    frame: false,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    resizable: false,
+    movable: false,
+    hasShadow: false,
+    focusable: false
+  });
+
+  overlayWindow.setIgnoreMouseEvents(true);
+  windowManager.setOverlayWindow(overlayWindow);
+
   if (process.env.VITE_DEV_SERVER_URL) {
-    mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
+    orbWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
   } else {
-    mainWindow.loadFile(join(__dirname, '../dist/index.html'));
+    orbWindow.loadFile(join(__dirname, '../dist/index.html'));
   }
-
-  windowManager.setMainWindow(mainWindow);
-  orbWindow = windowManager.createOrbWindow();
-  overlayWindow = windowManager.createOverlayWindow({ x: 0, y: 0, width: 100, height: 100 });
 }
 
-async function setupMonitoring() {
-  if (!mainWindow) return;
-  
-  workspaceMonitor.onDistractionDetected = (activeWindow) => {
-    windowManager.setTargetWindow(activeWindow);
-    windowManager.showOverlay(activeWindow);
-    mainWindow?.webContents.send('show-orb');
-  };
-  workspaceMonitor.startMonitoring();
-}
-
-app.whenReady().then(async () => {
-  createWindow();
-  await setupMonitoring();
-
+function setupIPC() {
   ipcMain.handle('check-ollama-connection', async () => {
-    return await ollamaService.checkConnection();
+    return await decisionEngine.checkOllamaConnection();
   });
 
   ipcMain.handle('evaluate-request', async (_event, userInput: string) => {
-    return await ollamaService.evaluateRequest(userInput);
+    return await decisionEngine.evaluateRequest(userInput);
   });
 
-  ipcMain.handle('grant-access', (_event, duration: number) => {
-    windowManager.grantAccess(duration);
+  ipcMain.handle('grant-access', (_event, index: number) => {
+    const duration = configurationService.getConfiguration().settings.accessDurations[index];
+    if (duration) {
+      decisionEngine.grantAccess(duration);
+    }
+    windowManager.hideOrb();
   });
 
   ipcMain.handle('get-configuration', () => {
-    return configuration;
+    return configurationService.getConfiguration();
   });
 
   ipcMain.handle('hide-orb', () => {
     windowManager.hideOrb();
-    windowManager.hideOverlay();
-    mainWindow?.webContents.send('hide-orb');
   });
+
+  ipcMain.handle('close-distraction', async () => {
+    const targetApp = windowManager.getTargetApp();
+    if (targetApp) {
+      await windowManager.closeDistraction(targetApp);
+    }
+  });
+
+  ipcMain.handle('show-settings', async () => {
+    if (!settingsWindow) {
+      settingsWindow = new BrowserWindow({
+        width: 600,
+        height: 800,
+        webPreferences: {
+          preload: join(__dirname, '../preload.js'),
+          contextIsolation: true,
+          nodeIntegration: false
+        }
+      });
+      settingsWindow.on('closed', () => {
+        settingsWindow = null;
+      });
+    }
+    settingsWindow.show();
+  });
+
+  ipcMain.handle('update-settings', (_event, settings: Partial<Configuration['settings']>) => {
+    configurationService.updateSettings(settings);
+    decisionEngine.updateConfiguration(configurationService.getConfiguration());
+    workspaceMonitor.updateConfiguration(configurationService.getConfiguration());
+  });
+}
+
+function setupEventHandlers() {
+  workspaceMonitor.onDistractionDetected = (activeWindow: ActiveWindowInfo) => {
+    decisionEngine.setCurrentApp(activeWindow);
+    windowManager.setTargetWindow(activeWindow);
+    windowManager.showOrb(activeWindow);
+    orbWindow?.webContents.send('show-orb');
+  };
+
+  workspaceMonitor.onClearPrompt = () => {
+    windowManager.hideOrb();
+    orbWindow?.webContents.send('hide-orb');
+  };
+
+  workspaceMonitor.startMonitoring();
+}
+
+function createTray() {
+  try {
+    const iconName = process.platform === 'win32' ? 'tray-icon-windows.png' : 'tray-icon-mac.png';
+    const iconPath = join(__dirname, '../assets', iconName);
+
+    let trayIcon: Electron.NativeImage;
+    try {
+      trayIcon = nativeImage.createFromPath(iconPath);
+    } catch {
+      trayIcon = nativeImage.createFromBuffer(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64'));
+    }
+
+    tray = new Tray(trayIcon);
+    tray.setToolTip('MindGate Productivity Assistant');
+
+    const contextMenu = Menu.buildFromTemplate([
+      {
+        label: 'Settings',
+        click: () => {
+          if (settingsWindow) {
+            settingsWindow.show();
+          }
+        }
+      },
+      { type: 'separator' },
+      {
+        label: 'Quit MindGate',
+        click: () => app.quit()
+      }
+    ]);
+
+    tray.setContextMenu(contextMenu);
+  } catch (error) {
+    console.error('Failed to create tray:', error);
+  }
+}
+
+app.whenReady().then(async () => {
+  await initialize();
 });
 
 app.on('window-all-closed', () => {
