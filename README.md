@@ -4,12 +4,33 @@ A futuristic, on-device AI productivity assistant for macOS that helps you stay 
 
 ## Features
 
-- **AI Orb Interface**: A futuristic, breathing AI orb that appears when you visit distracting content
-- **Local AI Evaluation**: Uses Ollama with llama3.1 running locally to evaluate your access requests
+- **AI Orb Interface**: A futuristic, breathing AI orb with flowing line animations that appears when you visit distracting content
+- **Liquid Glass Transparency**: Frosted glass effect using NSVisualEffectView with dynamic blur and adaptive tinting
+- **UI Alive Visual Dynamics**: Hover-triggered glow intensification, breathing animations (0.8-1.2 scale), micro-interactions
+- **Local AI Evaluation**: Uses Ollama with gemma3:1b running locally to evaluate your access requests
 - **Smart Access Control**: AI decides whether to grant access (with time limits) or block the distraction
 - **Seamless Integration**: Runs as a background agent without a Dock icon
-- **Browser Monitoring**: Tracks Safari and Chrome for distracting keywords
-- **App Monitoring**: Detects when you switch to distracting applications
+- **Browser Monitoring**: Tracks Safari, Chrome, Firefox, Brave, and Edge for distracting keywords
+- **App Monitoring**: Detects when you switch to distracting applications via Accessibility API
+- **Typing Effect**: Character-by-character reveal for AI responses
+
+## Enhancement Roadmap
+
+### Phase 1: Liquid Glass Transparency (macOS)
+- Enhanced frosted glass effect with NSVisualEffectView and Gaussian blur
+- Configurable transparency levels (90-95%) for different UI layers
+- Subtle shadow layers and adaptive color tinting
+
+### Phase 2: UI Alive - Visual Dynamics (macOS)
+- Enhanced orb breathing animation with hover state intensification
+- Dynamic glow effect that responds to mouse hover
+- Ripple effects and scale transitions on button clicks
+- Character-by-character typing animation for AI responses
+
+### Phase 3-4: Electron Migration (Cross-Platform)
+- React/Framer Motion UI components in `mindgate-electron/`
+- Cross-platform window management for Windows/Linux support
+- Platform-specific system monitoring modules
 
 ## System Requirements
 
