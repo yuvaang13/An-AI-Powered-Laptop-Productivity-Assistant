@@ -11,27 +11,58 @@ struct ChatView: View {
     @State private var aiResponse: String = ""
     @State private var showDurationSelection: Bool = false
     @State private var showDeniedMessage: Bool = false
-    @State private var showTakeoverView: Bool = false // New state for takeover view
-    @State private var countdownSeconds: Int = 0 // Initial countdown time
-    @State private var timer: Timer? // Timer instance
-    @State private var hasSubmitted: Bool = false // Track if user submitted once
+    @State private var showTakeoverView: Bool = false
+    @State private var countdownSeconds: Int = 0
+    @State private var timer: Timer?
+    @State private var hasSubmitted: Bool = false
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
-            // Premium glassmorphic background
-            RoundedRectangle(cornerRadius: 16)
-                .fill(.ultraThinMaterial)
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(0.28),
+                            Color.white.opacity(0.18),
+                            Color.white.opacity(0.12),
+                            Color.black.opacity(0.25)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
                 .background(
-                    RoundedRectangle(cornerRadius: 16)
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .fill(.regularMaterial)
+                        .opacity(0.85)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
                         .fill(
+                            RadialGradient(
+                                colors: [
+                                    Color.white.opacity(0.35),
+                                    Color.clear
+                                ],
+                                center: UnitPoint(x: 0.3, y: 0.35),
+                                startRadius: 0,
+                                endRadius: 180
+                            )
+                        )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .stroke(
                             LinearGradient(
                                 colors: [
-                                    Color(hex: configuration.theme.colors.background).opacity(0.85),
-                                    Color(hex: configuration.theme.colors.background).opacity(0.75)
+                                    Color.white.opacity(0.5),
+                                    Color.white.opacity(0.3),
+                                    Color.clear
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
-                            )
+                            ),
+                            lineWidth: 1.2
                         )
                 )
 
@@ -44,16 +75,21 @@ struct ChatView: View {
 
                 Text(headlineText)
                     .font(.system(size: 18, weight: .bold, design: .rounded))
-                    .foregroundColor(Color(hex: configuration.theme.colors.primary).opacity(0.95))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [.white, Color.white.opacity(0.7)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
                     .multilineTextAlignment(.center)
-                    .shadow(color: Color(hex: configuration.theme.colors.background).opacity(0.4), radius: 8, x: 0, y: 2)
                     .tracking(0)
                     .lineLimit(nil)
                     .fixedSize(horizontal: false, vertical: true)
 
                 Text("Distraction detected. Explain why.")
                     .font(.system(size: 11, weight: .medium, design: .rounded))
-                    .foregroundColor(Color(hex: configuration.theme.colors.primary).opacity(0.62))
+                    .foregroundColor(Color.white.opacity(0.55))
                     .multilineTextAlignment(.center)
                     .opacity(showDurationSelection || showDeniedMessage || showTakeoverView || isLoading ? 0 : 1)
                     .tracking(0.2)
@@ -68,32 +104,12 @@ struct ChatView: View {
 
             closeButton
         }
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .contentShape(RoundedRectangle(cornerRadius: 16))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(
-                    LinearGradient(
-                        colors: [
-                            Color(hex: configuration.theme.colors.primary).opacity(0.18),
-                            Color(hex: configuration.theme.colors.primary).opacity(0.08),
-                            Color(hex: configuration.theme.colors.primary).opacity(0.04)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    lineWidth: 1
-                )
-        )
-        .shadow(color: .black.opacity(0.6), radius: 40, x: 0, y: 20)
-        .shadow(color: .white.opacity(0.08), radius: 20, x: 0, y: 8)
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .contentShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .onAppear {
             startCountdown()
-            // Activate the app to enable keyboard input
             NSApp.activate(ignoringOtherApps: true)
-            // Request focus polling from WindowManager
             windowManager?.requestKeyboardFocus()
-            // Also trigger immediate focus attempt
             windowManager?.forceKeyboardFocus()
         }
         .onDisappear(perform: stopCountdown)
@@ -144,21 +160,27 @@ struct ChatView: View {
         }) {
             Image(systemName: "xmark")
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(Color(hex: configuration.theme.colors.primary).opacity(0.88))
+                .foregroundStyle(Color.white)
                 .frame(width: 32, height: 32)
                 .background(
                     Circle()
-                        .fill(.ultraThinMaterial)
-                        .background(
-                            Circle()
-                                .fill(Color(hex: configuration.theme.colors.primary).opacity(0.08))
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(0.35),
+                                    Color.white.opacity(0.2)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
                         )
+                        .background(.ultraThinMaterial.opacity(0.5))
                 )
-                .overlay(Circle().stroke(Color(hex: configuration.theme.colors.primary).opacity(0.18), lineWidth: 0.5))
+                .overlay(Circle().stroke(Color.white.opacity(0.3), lineWidth: 0.8))
         }
         .buttonStyle(.plain)
-        .padding(.top, 36)
-        .padding(.trailing, 40)
+        .padding(.top, 32)
+        .padding(.trailing, 36)
     }
 
     private var inputView: some View {
@@ -172,7 +194,7 @@ struct ChatView: View {
     private var assistantPromptView: some View {
         Text("Why do you need access?")
             .font(.system(size: 13, weight: .semibold, design: .rounded))
-            .foregroundColor(Color(hex: configuration.theme.colors.primary).opacity(0.9))
+            .foregroundColor(Color.white.opacity(0.9))
             .multilineTextAlignment(.center)
             .fixedSize(horizontal: false, vertical: true)
             .padding(.horizontal, 4)
@@ -181,12 +203,12 @@ struct ChatView: View {
     private var loadingView: some View {
         VStack(spacing: 12) {
             ProgressView()
-                .progressViewStyle(CircularProgressViewStyle(tint: Color(hex: configuration.theme.colors.primary)))
+                .progressViewStyle(CircularProgressViewStyle(tint: Color(hex: configuration.theme.colors.warning)))
                 .scaleEffect(1.0)
 
             Text("AI is thinking...")
                 .font(.system(size: 13, weight: .medium, design: .rounded))
-                .foregroundColor(Color(hex: configuration.theme.colors.primary).opacity(0.72))
+                .foregroundColor(Color.white.opacity(0.7))
                 .tracking(0.3)
         }
         .padding(.top, 8)
@@ -196,7 +218,7 @@ struct ChatView: View {
         VStack(spacing: 14) {
             Text(aiResponse)
                 .font(.system(size: 14, weight: .medium, design: .rounded))
-                .foregroundColor(Color(hex: configuration.theme.colors.primary).opacity(0.82))
+                .foregroundColor(Color.white.opacity(0.85))
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 4)
@@ -205,7 +227,6 @@ struct ChatView: View {
 
             Button(action: {
                 if showDeniedMessage {
-                    // Allow retry - reset for continued chat with gemma3:1b
                     resetStateWithRetry()
                 } else {
                     windowManager?.collapseOrb()
@@ -224,7 +245,7 @@ struct ChatView: View {
         VStack(spacing: 14) {
             Text("Choose duration:")
                 .font(.system(size: 13, weight: .medium, design: .rounded))
-                .foregroundColor(Color(hex: configuration.theme.colors.primary).opacity(0.68))
+                .foregroundColor(Color.white.opacity(0.68))
                 .tracking(0.3)
 
             HStack(spacing: 8) {
@@ -246,15 +267,21 @@ struct ChatView: View {
     private var deniedMessageView: some View {
         VStack(spacing: 12) {
             Image(systemName: "xmark.shield.fill")
-                .font(.system(size: 32))
-                .foregroundColor(Color(hex: configuration.theme.colors.primary).opacity(0.9))
-                .shadow(color: Color(hex: configuration.theme.colors.background).opacity(0.3), radius: 8, x: 0, y: 4)
+                .font(.system(size: 36))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [.white, Color.white.opacity(0.6)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .shadow(color: Color.black.opacity(0.2), radius: 12, x: 0, y: 4)
 
             Text("Stay focused and return to work.")
-                .font(.system(size: 13, weight: .medium, design: .rounded))
-                .foregroundColor(Color(hex: configuration.theme.colors.primary).opacity(0.68))
+                .font(.system(size: 14, weight: .medium, design: .rounded))
+                .foregroundColor(Color.white.opacity(0.7))
                 .multilineTextAlignment(.center)
-                .tracking(0.2)
+                .tracking(0.3)
         }
         .padding(.horizontal, 4)
     }
@@ -272,31 +299,32 @@ struct ChatView: View {
             Button(action: submitRequest) {
                 Image(systemName: "arrow.up")
                     .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(Color(hex: configuration.theme.colors.primary))
+                    .foregroundStyle(Color.white)
                     .frame(width: 34, height: 34)
                     .background(
                         Circle()
                             .fill(
-                                canSubmit 
+                                canSubmit
                                 ? LinearGradient(
                                     colors: [
-                                        Color(hex: configuration.theme.colors.primary).opacity(0.9),
-                                        Color(hex: configuration.theme.colors.primary).opacity(0.7)
+                                        Color.white.opacity(0.9),
+                                        Color.white.opacity(0.7)
                                     ],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 )
                                 : LinearGradient(
                                     colors: [
-                                        Color(hex: configuration.theme.colors.primary).opacity(0.12),
-                                        Color(hex: configuration.theme.colors.primary).opacity(0.08)
+                                        Color.white.opacity(0.25),
+                                        Color.white.opacity(0.15)
                                     ],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 )
                             )
+                            .background(.ultraThinMaterial.opacity(0.5))
                     )
-                    .overlay(Circle().stroke(Color(hex: configuration.theme.colors.primary).opacity(canSubmit ? 0.3 : 0.15), lineWidth: 0.5))
+                    .overlay(Circle().stroke(Color.white.opacity(canSubmit ? 0.4 : 0.2), lineWidth: 1))
             }
             .buttonStyle(.plain)
             .disabled(!canSubmit)
@@ -304,29 +332,36 @@ struct ChatView: View {
         }
         .padding(6)
         .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(.ultraThinMaterial)
-                .background(
-                    RoundedRectangle(cornerRadius: 14)
-                        .fill(Color(hex: configuration.theme.colors.background).opacity(0.3))
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(0.25),
+                            Color.white.opacity(0.15),
+                            Color.black.opacity(0.2)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
                 )
+                .background(.regularMaterial.opacity(0.7))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .stroke(
                     LinearGradient(
                         colors: [
-                            Color(hex: configuration.theme.colors.primary).opacity(0.15),
-                            Color(hex: configuration.theme.colors.primary).opacity(0.08),
-                            Color(hex: configuration.theme.colors.primary).opacity(0.04)
+                            Color.white.opacity(0.4),
+                            Color.white.opacity(0.2),
+                            Color.white.opacity(0.1)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     ),
-                    lineWidth: 1
+                    lineWidth: 1.2
                 )
         )
-        .shadow(color: Color(hex: configuration.theme.colors.background).opacity(0.4), radius: 16, x: 0, y: 10)
+        .shadow(color: Color.black.opacity(0.3), radius: 20, x: 0, y: 10)
     }
 
     private var canSubmit: Bool {
@@ -338,7 +373,6 @@ struct ChatView: View {
         isLoading = true
 
         Task { @MainActor in
-            // Check Ollama connection first
             let isOllamaRunning = await decisionEngine.checkOllamaConnection()
             if !isOllamaRunning {
                 isLoading = false
@@ -356,22 +390,18 @@ struct ChatView: View {
                 if result.isApproved {
                     showDurationSelection = true
                 } else {
-                    // Show overlay on YouTube window but keep orb visible for continued chat
                     showDeniedMessage = true
-                    
-                    // Trigger overlay on target app window
+
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                         windowManager?.showOverlay()
-                        
-                        // Close tab after overlay shows
+
                         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                             decisionEngine.closeCurrentAppOrTab()
                         }
-                        
-                        // Hide overlay after delay but keep orb for continued interaction
+
                         DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
                             windowManager?.hideOverlay()
-                            self.showTakeoverView = true // Show takeover view after overlay hides
+                            self.showTakeoverView = true
                         }
                     }
                 }
@@ -396,12 +426,12 @@ struct ChatView: View {
         isLoading = false
         showDurationSelection = false
         showDeniedMessage = false
-        showTakeoverView = false // Reset takeover view state
-        countdownSeconds = configuration.settings.justificationCountdownDuration // Reset countdown
-        stopCountdown() // Stop any active timer
+        showTakeoverView = false
+        countdownSeconds = configuration.settings.justificationCountdownDuration
+        stopCountdown()
         hasSubmitted = false
     }
-    
+
     private func resetStateWithRetry() {
         userInput = ""
         aiResponse = ""
@@ -412,14 +442,12 @@ struct ChatView: View {
         countdownSeconds = configuration.settings.justificationCountdownDuration
         stopCountdown()
         startCountdown()
-        // Keep orb visible and allow continued chat with AI
     }
 
     private func startCountdown() {
-        // Invalidate any existing timer first
         stopCountdown()
 
-        countdownSeconds = configuration.settings.justificationCountdownDuration // Set initial countdown time
+        countdownSeconds = configuration.settings.justificationCountdownDuration
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
             if self.countdownSeconds > 0 {
                 self.countdownSeconds -= 1
@@ -437,7 +465,6 @@ struct ChatView: View {
     private func handleCountdownExpired() {
         stopCountdown()
         if !isLoading && !showDurationSelection && !showDeniedMessage {
-            // If no decision has been made and timer expires, deny access
             Task { @MainActor in
                 isLoading = false
                 aiResponse = "Time's up! Access denied."
@@ -458,34 +485,30 @@ struct MinimalActionButtonStyle: ButtonStyle {
     func makeBody(configuration: Self.Configuration) -> some View {
         configuration.label
             .font(.system(size: 13, weight: .semibold, design: .rounded))
-            .foregroundColor(Color(hex: self.configuration.theme.colors.primary).opacity(0.92))
+            .foregroundStyle(Color.white)
             .padding(.horizontal, 14)
             .frame(height: 36)
             .background(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(hex: self.configuration.theme.colors.primary).opacity(configuration.isPressed ? 0.25 : 0.35),
-                                Color(hex: self.configuration.theme.colors.primary).opacity(configuration.isPressed ? 0.15 : 0.25)
+                                Color.white.opacity(configuration.isPressed ? 0.25 : 0.35),
+                                Color.white.opacity(configuration.isPressed ? 0.15 : 0.25)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(.ultraThinMaterial)
-                    )
+                    .background(.ultraThinMaterial.opacity(0.5))
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .stroke(Color(hex: self.configuration.theme.colors.primary).opacity(0.18), lineWidth: 0.5)
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(Color.white.opacity(0.3), lineWidth: 0.8)
             )
             .scaleEffect(configuration.isPressed ? 0.96 : 1)
     }
 }
-
 
 
 private struct ReliablePromptTextView: NSViewRepresentable {
@@ -522,8 +545,7 @@ private struct ReliablePromptTextView: NSViewRepresentable {
         textView.isHorizontallyResizable = false
         textView.isFieldEditor = false
         textView.string = text
-        
-        // Wrap in scroll view
+
         let scrollView = NSScrollView(frame: NSRect(x: 0, y: 0, width: 280, height: 52))
         scrollView.documentView = textView
         scrollView.hasVerticalScroller = false
@@ -531,21 +553,20 @@ private struct ReliablePromptTextView: NSViewRepresentable {
         scrollView.autoresizingMask = [.width, .height]
         scrollView.borderType = NSBorderType.noBorder
         scrollView.drawsBackground = false
-        
+
         return scrollView
     }
 
     func updateNSView(_ nsView: NSView, context: Context) {
         guard let scrollView = nsView as? NSScrollView,
               let textView = scrollView.documentView as? PlaceholderTextView else { return }
-        
+
         textView.placeholder = placeholder
         if textView.string != text {
             textView.string = text
         }
         textView.needsDisplay = true
-        
-        // Make window key and focus the text view
+
         DispatchQueue.main.async {
             guard let window = scrollView.window else { return }
             NSApp.activate(ignoringOtherApps: true)
@@ -553,7 +574,6 @@ private struct ReliablePromptTextView: NSViewRepresentable {
             window.makeMain()
             window.makeFirstResponder(textView)
         }
-        // Additional retry after delay for focus
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             guard let window = scrollView.window else { return }
             if window.firstResponder != textView {
@@ -565,7 +585,7 @@ private struct ReliablePromptTextView: NSViewRepresentable {
         }
     }
 
-final class Coordinator: NSObject, NSTextViewDelegate {
+    final class Coordinator: NSObject, NSTextViewDelegate {
         @Binding private var text: String
         private let onSubmit: () -> Void
 
@@ -593,13 +613,13 @@ final class Coordinator: NSObject, NSTextViewDelegate {
 
 private final class PlaceholderTextView: NSTextView {
     var placeholder: String = ""
-    var configuration: Configuration // Added for color access
+    var configuration: Configuration
 
     init(configuration: Configuration) {
         self.configuration = configuration
         super.init(frame: .zero, textContainer: nil)
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -609,7 +629,6 @@ private final class PlaceholderTextView: NSTextView {
     }
 
     override func mouseDown(with event: NSEvent) {
-        // Make sure we become first responder on click
         window?.makeFirstResponder(self)
         super.mouseDown(with: event)
     }

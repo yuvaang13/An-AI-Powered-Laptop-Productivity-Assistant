@@ -29,9 +29,9 @@ class WindowManager: ObservableObject {
     private let logger = Logger(subsystem: "com.mindgate.MindGate", category: "WindowManager")
     private var focusTimer: Timer?
     private var focusPollRetryCount = 0
-    private let maxFocusPollRetries = 20 // Stop after 2 seconds of polling
+    private let maxFocusPollRetries = 20
     weak var targetApp: NSRunningApplication?
-    
+
     private var targetWindowFrame: NSRect?
 
     @Published var isOrbExpanded = false
@@ -100,7 +100,7 @@ class WindowManager: ObservableObject {
         panel.isFloatingPanel = true
         panel.level = .screenSaver
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle, .stationary]
-        panel.backgroundColor = NSColor.black
+        panel.backgroundColor = .clear
         panel.isOpaque = false
         panel.hasShadow = false
         panel.ignoresMouseEvents = true
@@ -108,9 +108,10 @@ class WindowManager: ObservableObject {
         panel.hidesOnDeactivate = false
         panel.acceptsMouseMovedEvents = false
 
+        // Set content view for liquid glass effect
         panel.contentView = overlayHostingController?.view
         panel.contentView?.wantsLayer = true
-        panel.contentView?.layer?.backgroundColor = NSColor.black.withAlphaComponent(0.7).cgColor
+        panel.contentView?.layer?.backgroundColor = NSColor.clear.cgColor
         overlayPanel = panel
         logger.info("Overlay panel setup complete")
     }
@@ -125,7 +126,7 @@ class WindowManager: ObservableObject {
 
         let xOffset: CGFloat = isOrbExpanded ? configurationManager.configuration.theme.dimensions.orbXOffset + 6 : configurationManager.configuration.theme.dimensions.orbXOffset
         let yOffset: CGFloat = isOrbExpanded ? configurationManager.configuration.theme.dimensions.orbYOffset : configurationManager.configuration.theme.dimensions.orbYOffset
-        
+
         let distractionOffset: CGFloat = isDistractionDetected ? configurationManager.configuration.theme.dimensions.orbDistractionOffset : 0
         let x = screenFrame.minX + xOffset + distractionOffset
         let y = screenFrame.maxY - panelHeight - yOffset - 100 + distractionOffset
@@ -205,15 +206,14 @@ class WindowManager: ObservableObject {
         logger.info("🔮 Showing Orb...")
         isDistractionDetected = true
         isOrbExpanded = true
-        
-        // Capture the target window frame at distraction time
+
         if let app = targetApp {
             targetWindowFrame = getTargetAppWindowFrameWithFallback(app: app)
         }
         if let storedFrame = targetWindowFrame {
             logger.info("Captured target window frame at distraction time: \(storedFrame.debugDescription)")
         }
-        
+
         refreshOrbView()
         positionOrbPanel()
 
@@ -250,15 +250,15 @@ class WindowManager: ObservableObject {
             }
         }
     }
-    
+
     func requestKeyboardFocus() {
         startFocusPolling()
     }
-    
+
     func forceKeyboardFocus() {
         pollForFirstResponder()
     }
-    
+
     private func startFocusPolling() {
         focusTimer?.invalidate()
         focusPollRetryCount = 0
@@ -273,45 +273,44 @@ class WindowManager: ObservableObject {
             }
         }
     }
-    
+
     private func stopFocusPolling() {
         focusTimer?.invalidate()
         focusTimer = nil
         focusPollRetryCount = 0
     }
-    
+
     private func pollForFirstResponder() {
-        guard let panel = orbPanel, isOrbExpanded else { 
+        guard let panel = orbPanel, isOrbExpanded else {
             stopFocusPolling()
-            return 
+            return
         }
-        
+
         let textView = findTextViewRecursively(in: panel.contentView)
-        
+
         if let textView = textView {
             NSApp.activate(ignoringOtherApps: true)
             panel.makeKeyAndOrderFront(nil)
             panel.makeMain()
             panel.makeFirstResponder(textView)
-            
-            // Stop polling once focus is achieved
+
             if panel.firstResponder === textView {
                 stopFocusPolling()
             }
         }
     }
-    
+
     private func findTextViewRecursively(in view: NSView?) -> NSTextView? {
         guard let view = view else { return nil }
-        
+
         if let scrollView = view as? NSScrollView {
             return scrollView.documentView as? NSTextView ?? findTextViewRecursively(in: scrollView.contentView)
         }
-        
+
         if let textView = view as? NSTextView {
             return textView
         }
-        
+
         if view.isMember(of: NSClassFromString("NSHostingView") ?? NSView.self) {
             for subview in view.subviews {
                 if let found = findTextViewRecursively(in: subview) {
@@ -319,13 +318,13 @@ class WindowManager: ObservableObject {
                 }
             }
         }
-        
+
         for subview in view.subviews {
             if let found = findTextViewRecursively(in: subview) {
                 return found
             }
         }
-        
+
         return nil
     }
 
@@ -340,7 +339,6 @@ class WindowManager: ObservableObject {
 
     // MARK: - Overlay Control
     func showOverlay() {
-        // Use the captured window frame if available, otherwise try to get it
         let targetFrame: NSRect
 
         if let storedFrame = targetWindowFrame {
@@ -350,7 +348,6 @@ class WindowManager: ObservableObject {
             targetFrame = getTargetAppWindowFrameWithFallback(app: targetApp)
             logger.info("Using fresh app window frame: \(targetFrame.debugDescription)")
         } else {
-            // Fallback to screen
             let mouseLocation = NSEvent.mouseLocation
             let screen = NSScreen.screens.first { screen in
                 NSMouseInRect(mouseLocation, screen.frame, false)
@@ -374,21 +371,20 @@ class WindowManager: ObservableObject {
         isOverlayVisible = true
         logger.info("Overlay visibility check: isVisible=\(panel.isVisible), frame=\(panel.frame.debugDescription), screenCount=\(NSScreen.screens.count)")
     }
-    
+
     private func getTargetAppWindowFrame(app: NSRunningApplication) -> NSRect? {
         let appElement = AXUIElementCreateApplication(app.processIdentifier)
-        
-        // First try to get the main window
+
         var mainWindowRef: CFTypeRef?
         let mainWindowResult = AXUIElementCopyAttributeValue(appElement, kAXMainWindowAttribute as CFString, &mainWindowRef)
-        
+
         if mainWindowResult == .success, let mainWindow = mainWindowRef {
             var positionRef: CFTypeRef?
             var sizeRef: CFTypeRef?
-            
+
             AXUIElementCopyAttributeValue(mainWindow as! AXUIElement, kAXPositionAttribute as CFString, &positionRef)
             AXUIElementCopyAttributeValue(mainWindow as! AXUIElement, kAXSizeAttribute as CFString, &sizeRef)
-            
+
             if let position = positionRef as? NSValue,
                let size = sizeRef as? NSValue {
                 let point = position.pointValue
@@ -398,18 +394,17 @@ class WindowManager: ObservableObject {
                 return windowFrame
             }
         }
-        
-        // Try to get any focused window
+
         var focusedWindowRef: CFTypeRef?
         let focusedResult = AXUIElementCopyAttributeValue(appElement, kAXFocusedWindowAttribute as CFString, &focusedWindowRef)
-        
+
         if focusedResult == .success, let focusedWindow = focusedWindowRef {
             var positionRef: CFTypeRef?
             var sizeRef: CFTypeRef?
-            
+
             AXUIElementCopyAttributeValue(focusedWindow as! AXUIElement, kAXPositionAttribute as CFString, &positionRef)
             AXUIElementCopyAttributeValue(focusedWindow as! AXUIElement, kAXSizeAttribute as CFString, &sizeRef)
-            
+
             if let position = positionRef as? NSValue,
                let size = sizeRef as? NSValue {
                 let point = position.pointValue
@@ -419,42 +414,39 @@ class WindowManager: ObservableObject {
                 return windowFrame
             }
         }
-        
-        // Try to get all windows and find the one near mouse
+
         var windowsRef: CFTypeRef?
         let windowsResult = AXUIElementCopyAttributeValue(appElement, kAXWindowsAttribute as CFString, &windowsRef)
-        
+
         if windowsResult == .success, let windows = windowsRef as? [AXUIElement] {
             let mouseLocation = NSEvent.mouseLocation
             for window in windows {
                 var positionRef: CFTypeRef?
                 var sizeRef: CFTypeRef?
-                
+
                 AXUIElementCopyAttributeValue(window, kAXPositionAttribute as CFString, &positionRef)
                 AXUIElementCopyAttributeValue(window, kAXSizeAttribute as CFString, &sizeRef)
-                
+
                 if let position = positionRef as? NSValue,
                    let size = sizeRef as? NSValue {
                     let point = position.pointValue
                     let windowSize = size.sizeValue
                     let windowFrame = NSRect(x: point.x, y: point.y, width: windowSize.width, height: windowSize.height)
-                    
-                    // Check if mouse is inside this window
+
                     if NSMouseInRect(mouseLocation, windowFrame, false) {
                         logger.info("Found window containing mouse at: \(windowFrame.debugDescription)")
                         return windowFrame
                     }
                 }
             }
-            
-            // If no window contains mouse, use the first window
+
             if let firstWindow = windows.first {
                 var positionRef: CFTypeRef?
                 var sizeRef: CFTypeRef?
-                
+
                 AXUIElementCopyAttributeValue(firstWindow, kAXPositionAttribute as CFString, &positionRef)
                 AXUIElementCopyAttributeValue(firstWindow, kAXSizeAttribute as CFString, &sizeRef)
-                
+
                 if let position = positionRef as? NSValue,
                    let size = sizeRef as? NSValue {
                     let point = position.pointValue
@@ -465,13 +457,12 @@ class WindowManager: ObservableObject {
                 }
             }
         }
-        
-        // Fallback to screen frame where mouse is located
+
         let mouseLocation = NSEvent.mouseLocation
         let screen = NSScreen.screens.first { screen in
             NSMouseInRect(mouseLocation, screen.frame, false)
         } ?? NSScreen.main ?? NSScreen.screens.first
-        
+
         logger.warning("Could not get window frame, using screen frame: \(screen?.frame.debugDescription ?? "nil")")
         return screen?.frame ?? NSRect(x: 0, y: 0, width: 1920, height: 1080)
     }

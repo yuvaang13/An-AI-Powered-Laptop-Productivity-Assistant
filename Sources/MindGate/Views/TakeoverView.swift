@@ -6,75 +6,105 @@ struct TakeoverView: View {
     let decisionEngine: DecisionEngine
 
     var body: some View {
-        VStack(spacing: 24) {
-            VStack(spacing: 8) {
+        VStack(spacing: 20) {
+            VStack(spacing: 6) {
                 Text("Time to Refocus")
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
-                    .foregroundColor(Color(hex: configuration.theme.colors.primary))
-                
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [.white, Color.white.opacity(0.7)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+
                 Text("Your work is waiting for you.")
-                    .font(.system(size: 16, weight: .medium, design: .rounded))
-                    .foregroundColor(Color(hex: configuration.theme.colors.textSecondary))
+                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .foregroundColor(Color.white.opacity(0.6))
             }
 
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 10) {
                 Text("Productive Suggestions:")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
-                    .foregroundColor(Color(hex: configuration.theme.colors.primary).opacity(0.8))
-                
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .foregroundColor(Color.white.opacity(0.8))
+
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 8) {
                         ForEach(configuration.settings.productiveTasks, id: \.self) { task in
-                            HStack(alignment: .top, spacing: 8) {
-                                Image(systemName: "circle.fill")
-                                    .font(.system(size: 6))
-                                    .padding(.top, 6)
+                            HStack(alignment: .top, spacing: 6) {
+                                Circle()
+                                    .fill(Color(hex: configuration.theme.colors.warning))
+                                    .frame(width: 5, height: 5)
+                                    .padding(.top, 4)
                                 Text(task)
-                                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                                    .font(.system(size: 13, weight: .regular, design: .rounded))
+                                    .foregroundColor(Color.white.opacity(0.75))
+                                    .lineLimit(2)
                             }
-                            .foregroundColor(Color(hex: configuration.theme.colors.text))
                         }
                     }
-                    .padding()
+                    .padding(12)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color(hex: configuration.theme.colors.surface).opacity(0.3))
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .fill(Color.white.opacity(0.12))
+                            .background(.ultraThinMaterial.opacity(0.5))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .stroke(Color.white.opacity(0.2), lineWidth: 0.8)
                     )
                 }
-                .frame(maxHeight: 180)
+                .frame(maxHeight: 150)
             }
 
-            VStack(spacing: 12) {
-                HStack(spacing: 12) {
+            VStack(spacing: 10) {
+                HStack(spacing: 10) {
                     Button(action: openNewBrowserTab) {
                         Label("New Tab", systemImage: "safari.fill")
+                            .font(.system(size: 12, weight: .semibold, design: .rounded))
                             .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(MinimalActionButtonStyle(configuration: configuration))
+                    .buttonStyle(LiquidGlassButtonStyle())
 
                     Button(action: openProductiveApp) {
                         Label("Open App", systemImage: "app.fill")
+                            .font(.system(size: 12, weight: .semibold, design: .rounded))
                             .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(MinimalActionButtonStyle(configuration: configuration))
+                    .buttonStyle(LiquidGlassButtonStyle())
                 }
 
                 Button(action: {
                     windowManager?.hideOrb()
                 }) {
                     Text("Dismiss & Return to Work")
-                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
                         .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(MinimalActionButtonStyle(configuration: configuration))
+                .buttonStyle(LiquidGlassButtonStyle())
             }
         }
-        .padding(24)
+        .padding(20)
         .background(
-            RoundedRectangle(cornerRadius: 24)
-                .fill(Color(hex: configuration.theme.colors.background).opacity(0.95))
-                .shadow(color: Color.black.opacity(0.3), radius: 20)
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(0.25),
+                            Color.white.opacity(0.15),
+                            Color.black.opacity(0.25)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .background(.regularMaterial.opacity(0.8))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                )
+                .shadow(color: Color.black.opacity(0.3), radius: 30, x: 0, y: 15)
         )
     }
 
@@ -90,5 +120,34 @@ struct TakeoverView: View {
             NSWorkspace.shared.launchApplication(appName)
             windowManager?.hideOrb()
         }
+    }
+}
+
+struct LiquidGlassButtonStyle: ButtonStyle {
+    func makeBody(configuration: Self.Configuration) -> some View {
+        configuration.label
+            .foregroundStyle(Color.white)
+            .padding(.horizontal, 12)
+            .frame(height: 34)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.25),
+                                Color.white.opacity(0.15),
+                                Color.white.opacity(0.08)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .background(.ultraThinMaterial.opacity(0.6))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .stroke(Color.white.opacity(0.3), lineWidth: 0.8)
+                    )
+            )
+            .scaleEffect(configuration.isPressed ? 0.96 : 1)
     }
 }
