@@ -160,10 +160,37 @@ class WindowManager: ObservableObject {
 
         contentView.wantsLayer = true
         contentView.frame = NSRect(origin: .zero, size: size)
-        contentView.layer?.backgroundColor = NSColor.clear.cgColor
         contentView.layer?.cornerRadius = 16
         contentView.layer?.cornerCurve = .continuous
         contentView.layer?.masksToBounds = true
+
+        // Add frosted glass effect with NSVisualEffectView
+        let visualEffectView = NSVisualEffectView(frame: contentView.bounds)
+        visualEffectView.material = .hudWindow
+        visualEffectView.blendingMode = .behindWindow
+        visualEffectView.state = .active
+
+        // Configure blur and vibrancy
+        if let layer = visualEffectView.layer {
+            layer.masksToBounds = true
+            layer.cornerRadius = 16
+            layer.cornerCurve = .continuous
+        }
+
+        // Add blur layer
+        let blurLayer = CALayer()
+        blurLayer.frame = contentView.bounds
+        blurLayer.backgroundColor = NSColor.black.withAlphaComponent(0.05).cgColor
+        blurLayer.cornerRadius = 16
+        blurLayer.cornerCurve = .continuous
+        blurLayer.opacity = 0.15
+
+        // Add visual effect view as backing layer
+        visualEffectView.autoresizingMask = [.width, .height]
+        contentView.addSubview(visualEffectView, positioned: .below, relativeTo: orbHostingController?.view)
+
+        contentView.layer?.insertSublayer(blurLayer, at: 0)
+        contentView.layer?.backgroundColor = NSColor.clear.cgColor
     }
 
     private func targetScreen() -> NSScreen? {

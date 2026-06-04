@@ -6,6 +6,8 @@ struct OrbView: View {
     let configurationManager: ConfigurationManager
     let isExpanded: Bool
 
+    @State private var isHovered = false
+
     init(windowManager: WindowManager?, decisionEngine: DecisionEngine, configurationManager: ConfigurationManager, isExpanded: Bool) {
         self.windowManager = windowManager
         self.decisionEngine = decisionEngine
@@ -19,12 +21,17 @@ struct OrbView: View {
                 ChatView(windowManager: windowManager, decisionEngine: decisionEngine, configuration: configurationManager.configuration)
                     .frame(width: configurationManager.configuration.theme.dimensions.orbExpandedWidth, height: configurationManager.configuration.theme.dimensions.orbExpandedHeight)
             } else {
-                FlowingLinesView(size: configurationManager.configuration.theme.dimensions.orbSize, configuration: configurationManager.configuration)
+                FlowingLinesView(size: configurationManager.configuration.theme.dimensions.orbSize, configuration: configurationManager.configuration, isHovered: isHovered)
                     .frame(width: configurationManager.configuration.theme.dimensions.orbSize, height: configurationManager.configuration.theme.dimensions.orbSize)
                     .contentShape(Rectangle())
                     .onTapGesture {
                         withAnimation(.easeInOut(duration: configurationManager.configuration.theme.animation.orbTransitionDuration)) {
                             windowManager?.expandOrb()
+                        }
+                    }
+                    .onHover { hovering in
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            isHovered = hovering
                         }
                     }
             }
@@ -35,14 +42,27 @@ struct OrbView: View {
 struct FlowingLinesView: View {
     let size: CGFloat
     let configuration: Configuration
-    
+    let isHovered: Bool
+
     @State private var phase: CGFloat = 0
     @State private var breath: CGFloat = 0
     @State private var glowIntensity: CGFloat = 0.5
-    
+
+    private var breathingScale: CGFloat {
+        // 0.8-1.2 scale with 3s cycle per plan
+        isHovered ? 1 + breath * 0.1 : 1 + breath * 0.04
+    }
+
+    private var breathingOpacity: CGFloat {
+        isHovered ? 0.92 + breath * 0.08 : 0.96 + breath * 0.04
+    }
+
+    private var glowEffect: CGFloat {
+        isHovered ? glowIntensity * 0.2 : glowIntensity * 0.08
+    }
+
     var body: some View {
         ZStack {
-            // Premium black gradient background
             LinearGradient(
                 colors: [
                     Color(hex: configuration.theme.colors.background).opacity(0.98),
@@ -51,11 +71,10 @@ struct FlowingLinesView: View {
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
-            
-            // Subtle ambient glow
+
             RadialGradient(
                 colors: [
-                    Color(hex: configuration.theme.colors.primary).opacity(glowIntensity * 0.08),
+                    Color(hex: configuration.theme.colors.primary).opacity(glowEffect),
                     Color.clear
                 ],
                 center: .center,
@@ -63,10 +82,8 @@ struct FlowingLinesView: View {
                 endRadius: size * 0.6
             )
             .blur(radius: 20)
-            
-            // Layered white flowing lines animation
+
             ZStack {
-                // Background layer - subtle
                 ForEach(0..<3, id: \.self) { index in
                     FlowingLine(
                         phase: phase * 0.7 + CGFloat(index) * 1.2,
@@ -80,8 +97,7 @@ struct FlowingLinesView: View {
                     )
                     .blur(radius: 1.5)
                 }
-                
-                // Middle layer - main
+
                 ForEach(0..<5, id: \.self) { index in
                     FlowingLine(
                         phase: phase + CGFloat(index) * 0.9,
@@ -95,8 +111,7 @@ struct FlowingLinesView: View {
                     )
                     .blur(radius: 0.8)
                 }
-                
-                // Foreground layer - accent
+
                 ForEach(0..<2, id: \.self) { index in
                     FlowingLine(
                         phase: phase * 1.3 + CGFloat(index) * 1.5,
@@ -113,8 +128,8 @@ struct FlowingLinesView: View {
             .frame(width: size * 0.85, height: size * 0.65)
         }
         .frame(width: size, height: size)
-        .scaleEffect(1 + breath * 0.04)
-        .opacity(0.96 + breath * 0.04)
+        .scaleEffect(breathingScale)
+        .opacity(breathingOpacity)
         .drawingGroup(opaque: false, colorMode: .linear)
         .accessibilityLabel("MindGate flowing lines")
         .onAppear {

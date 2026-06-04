@@ -148,6 +148,7 @@ struct LiquidGlassButtonStyle: ButtonStyle {
                             .stroke(Color.white.opacity(0.3), lineWidth: 0.8)
                     )
             )
-            .scaleEffect(configuration.isPressed ? 0.96 : 1)
+            .scaleEffect(configuration.isPressed ? 0.95 : 1)
+            .animation(.easeInOut(duration: 0.15), value: configuration.isPressed)
     }
 }

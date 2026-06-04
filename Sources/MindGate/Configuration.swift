@@ -140,7 +140,7 @@ struct UITheme: Codable {
             warning: "FF9F0A" // System Orange
         ),
         animation: UITheme.Animation(
-            orbBreathingDuration: 2.0,
+            orbBreathingDuration: 3.0,
             orbTransitionDuration: 0.3,
             overlayFadeDuration: 0.5
         ),

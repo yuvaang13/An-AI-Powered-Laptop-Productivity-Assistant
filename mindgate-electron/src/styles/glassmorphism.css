@@ -1,0 +1,72 @@
+:root {
+  --glass-primary: rgba(255, 255, 255, 0.9);
+  --glass-secondary: rgba(255, 255, 255, 0.85);
+  --glass-accent: rgba(255, 255, 255, 0.6);
+  --glass-background: rgba(0, 0, 0, 0.95);
+  --glass-surface: rgba(255, 255, 255, 0.12);
+  --glass-text: rgba(255, 255, 255, 0.9);
+  --glass-text-secondary: rgba(255, 255, 255, 0.55);
+  --glass-error: #FF453A;
+  --glass-warning: #FF9F0A;
+  --blur-amount: 20px;
+  --glass-border: rgba(255, 255, 255, 0.3);
+}
+
+.glass-container {
+  background: var(--glass-background);
+  backdrop-filter: blur(var(--blur-amount));
+  -webkit-backdrop-filter: blur(var(--blur-amount));
+}
+
+.glass-primary {
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.28),
+    rgba(255, 255, 255, 0.18),
+    rgba(255, 255, 255, 0.12),
+    rgba(0, 0, 0, 0.25)
+  );
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+}
+
+.glass-secondary {
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.25),
+    rgba(255, 255, 255, 0.15),
+    rgba(255, 255, 255, 0.08)
+  );
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.glass-accent {
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.35),
+    rgba(255, 255, 255, 0.2)
+  );
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.glass-border {
+  border: 1px solid var(--glass-border);
+}
+
+.glass-rounded {
+  border-radius: 16px;
+  -webkit-border-radius: 16px;
+}
+
+.glass-glow {
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
+}
+
+.glass-shadow {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.glass-overlay {
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+}

@@ -66,7 +66,7 @@ struct ChatView: View {
                         )
                 )
 
-            FlowingLinesView(size: configuration.theme.dimensions.orbExpandedWidth, configuration: configuration)
+            FlowingLinesView(size: configuration.theme.dimensions.orbExpandedWidth, configuration: configuration, isHovered: false)
                 .allowsHitTesting(false)
                 .opacity(0.15)
 
@@ -216,14 +216,7 @@ struct ChatView: View {
 
     private var responseView: some View {
         VStack(spacing: 14) {
-            Text(aiResponse)
-                .font(.system(size: 14, weight: .medium, design: .rounded))
-                .foregroundColor(Color.white.opacity(0.85))
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.horizontal, 4)
-                .lineSpacing(3)
-                .tracking(0.2)
+            TypingTextView(text: aiResponse, configuration: configuration)
 
             Button(action: {
                 if showDeniedMessage {
@@ -506,7 +499,8 @@ struct MinimalActionButtonStyle: ButtonStyle {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .stroke(Color.white.opacity(0.3), lineWidth: 0.8)
             )
-            .scaleEffect(configuration.isPressed ? 0.96 : 1)
+            .scaleEffect(configuration.isPressed ? 0.95 : 1)
+            .animation(.easeInOut(duration: 0.15), value: configuration.isPressed)
     }
 }
 
@@ -646,5 +640,46 @@ private final class PlaceholderTextView: NSTextView {
             at: NSPoint(x: textContainerInset.width, y: textContainerInset.height),
             withAttributes: attributes
         )
+    }
+}
+
+struct TypingTextView: View {
+    let text: String
+    let configuration: Configuration
+
+    @State private var displayedText: String = ""
+    @State private var currentIndex: Int = 0
+
+    var body: some View {
+        Text(displayedText)
+            .font(.system(size: 14, weight: .medium, design: .rounded))
+            .foregroundColor(Color.white.opacity(0.85))
+            .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, 4)
+            .lineSpacing(3)
+            .tracking(0.2)
+            .onAppear {
+                startTypingAnimation()
+            }
+            .onChange(of: text) { oldValue, newValue in
+                if displayedText.isEmpty {
+                    startTypingAnimation()
+                }
+            }
+    }
+
+    private func startTypingAnimation() {
+        displayedText = ""
+        currentIndex = 0
+        let characters = Array(text)
+        Timer.scheduledTimer(withTimeInterval: 0.02, repeats: true) { timer in
+            if currentIndex < characters.count {
+                displayedText.append(characters[currentIndex])
+                currentIndex += 1
+            } else {
+                timer.invalidate()
+            }
+        }
     }
 }
