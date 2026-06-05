@@ -117,7 +117,14 @@ struct TakeoverView: View {
 
     private func openProductiveApp() {
         if let appName = configuration.settings.productiveApps.randomElement() {
-            NSWorkspace.shared.launchApplication(appName)
+            if let url = URL(string: "file:///Applications/\(appName).app") {
+                let configuration = NSWorkspace.OpenConfiguration()
+                NSWorkspace.shared.openApplication(at: url, configuration: configuration) { _, error in
+                    if let error = error {
+                        print("Failed to launch app: \(error.localizedDescription)")
+                    }
+                }
+            }
             windowManager?.hideOrb()
         }
     }

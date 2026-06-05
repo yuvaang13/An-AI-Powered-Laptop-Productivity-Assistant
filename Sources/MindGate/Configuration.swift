@@ -1,4 +1,3 @@
-
 import Foundation
 import SwiftUI
 
@@ -8,6 +7,7 @@ struct AppSettings: Codable {
     var monitoredBrowsers: [String]
     var ollamaURL: String
     var ollamaModel: String
+    var ollamaTimeout: Int
     var accessDurations: [TimeInterval]
     var accessDurationLabels: [String]
     var productiveTasks: [String]
@@ -20,6 +20,7 @@ struct AppSettings: Codable {
         monitoredBrowsers: [String],
         ollamaURL: String,
         ollamaModel: String,
+        ollamaTimeout: Int,
         accessDurations: [TimeInterval],
         accessDurationLabels: [String],
         productiveTasks: [String],
@@ -31,6 +32,7 @@ struct AppSettings: Codable {
         self.monitoredBrowsers = monitoredBrowsers
         self.ollamaURL = ollamaURL
         self.ollamaModel = ollamaModel
+        self.ollamaTimeout = ollamaTimeout
         self.accessDurations = accessDurations
         self.accessDurationLabels = accessDurationLabels
         self.productiveTasks = productiveTasks
@@ -47,6 +49,7 @@ struct AppSettings: Codable {
         monitoredBrowsers = try container.decodeIfPresent([String].self, forKey: .monitoredBrowsers) ?? defaults.monitoredBrowsers
         ollamaURL = try container.decodeIfPresent(String.self, forKey: .ollamaURL) ?? defaults.ollamaURL
         ollamaModel = try container.decodeIfPresent(String.self, forKey: .ollamaModel) ?? defaults.ollamaModel
+        ollamaTimeout = try container.decodeIfPresent(Int.self, forKey: .ollamaTimeout) ?? defaults.ollamaTimeout
         accessDurations = try container.decodeIfPresent([TimeInterval].self, forKey: .accessDurations) ?? defaults.accessDurations
         accessDurationLabels = try container.decodeIfPresent([String].self, forKey: .accessDurationLabels) ?? defaults.accessDurationLabels
         productiveTasks = try container.decodeIfPresent([String].self, forKey: .productiveTasks) ?? defaults.productiveTasks
@@ -74,6 +77,7 @@ struct AppSettings: Codable {
         ],
         ollamaURL: "http://localhost:11434/api/generate",
         ollamaModel: "gemma3:1b",
+        ollamaTimeout: 10,
         accessDurations: [300, 600, 900],
         accessDurationLabels: ["5 Mins", "10 Mins", "15 Mins"],
         productiveTasks: [
@@ -85,9 +89,9 @@ struct AppSettings: Codable {
         ],
         productiveApps: [
             "Xcode",
-            "Safari", // Can be used for productive research
-            "Things", // Example task manager
-            "Obsidian", // Example note-taking app
+            "Safari",
+            "Things",
+            "Obsidian",
             "Terminal"
         ],
         justificationCountdownDuration: 15
@@ -136,8 +140,8 @@ struct UITheme: Codable {
             surface: "000000",
             text: "FFFFFF",
             textSecondary: "FFFFFFB3",
-            error: "FF453A", // System Red
-            warning: "FF9F0A" // System Orange
+            error: "FF453A",
+            warning: "FF9F0A"
         ),
         animation: UITheme.Animation(
             orbBreathingDuration: 3.0,
@@ -159,10 +163,12 @@ struct UITheme: Codable {
 struct Configuration: Codable {
     var settings: AppSettings
     var theme: UITheme
+    var configVersion: Int = 1
 
     static let `default` = Configuration(
         settings: .defaultSettings,
-        theme: .defaultTheme
+        theme: .defaultTheme,
+        configVersion: 1
     )
 }
 
@@ -173,11 +179,11 @@ extension Color {
         Scanner(string: hex).scanHexInt64(&int)
         let a, r, g, b: UInt64
         switch hex.count {
-        case 3: // RGB (12-bit)
+        case 3:
             (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
-        case 6: // RGB (24-bit)
+        case 6:
             (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
-        case 8: // ARGB (32-bit)
+        case 8:
             (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
         default:
             (a, r, g, b) = (255, 0, 0, 0)
