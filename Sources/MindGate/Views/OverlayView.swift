@@ -3,15 +3,13 @@ import AppKit
 
 struct OverlayView: View {
     let configurationManager: ConfigurationManager
-
+    var aiMessage: String?
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // Semi-transparent overlay background that dims the screen
                 Color.black.opacity(0.4)
                     .ignoresSafeArea()
 
-                // Centered liquid glass content panel
                 VStack(spacing: 24) {
                     liquidGlassContent
                         .padding(40)
@@ -52,7 +50,7 @@ struct OverlayView: View {
                                         colors: [
                                             Color.white.opacity(0.4),
                                             Color.white.opacity(0.2),
-                                            Color.clear
+                                            .clear
                                         ],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
@@ -85,8 +83,8 @@ struct OverlayView: View {
                 .shadow(color: Color(hex: configurationManager.configuration.theme.colors.error).opacity(0.4), radius: 20)
                 .symbolEffect(.pulse.wholeSymbol, options: .speed(2))
 
-            Text("Access Denied")
-                .font(.system(size: 28, weight: .bold, design: .rounded))
+            Text(aiMessage ?? "Access Denied")
+                .font(.system(size: 22, weight: .bold, design: .rounded))
                 .foregroundStyle(
                     LinearGradient(
                         colors: [.white, Color.white.opacity(0.7)],
@@ -94,6 +92,8 @@ struct OverlayView: View {
                         endPoint: .bottomTrailing
                     )
                 )
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
 
             Text("Return to your work")
                 .font(.system(size: 16, weight: .medium, design: .rounded))

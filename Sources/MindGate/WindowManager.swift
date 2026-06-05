@@ -80,14 +80,31 @@ class WindowManager: ObservableObject {
         panel.acceptsMouseMovedEvents = true
         panel.tabbingMode = .disallowed
         panel.ignoresMouseEvents = false
-        panel.contentView = orbHostingController?.view
-        panel.contentView?.wantsLayer = true
-        panel.contentView?.layer?.backgroundColor = NSColor.clear.cgColor
 
+        let containerView = NSView(frame: panel.contentLayoutRect)
+        containerView.wantsLayer = true
+        containerView.layer?.backgroundColor = NSColor.clear.cgColor
+
+        let visualEffectView = NSVisualEffectView(frame: containerView.bounds)
+        visualEffectView.material = .hudWindow
+        visualEffectView.blendingMode = .behindWindow
+        visualEffectView.state = .active
+        visualEffectView.autoresizingMask = [.width, .height]
+
+        let hostingView = orbHostingController!.view
+        hostingView.frame = containerView.bounds
+        hostingView.autoresizingMask = [.width, .height]
+        hostingView.wantsLayer = true
+        hostingView.layer?.backgroundColor = NSColor.clear.cgColor
+
+        containerView.addSubview(visualEffectView)
+        containerView.addSubview(hostingView, positioned: .above, relativeTo: visualEffectView)
+
+        panel.contentView = containerView
         orbPanel = panel
         positionOrbPanel()
 
-        logger.info("🔧 Orb panel setup complete")
+        logger.info("Orb panel setup complete")
     }
 
     // MARK: - Overlay Panel Setup
@@ -169,13 +186,7 @@ class WindowManager: ObservableObject {
             configurationManager: configurationManager,
             isExpanded: isOrbExpanded
         )
-        orbHostingController?.view.frame = NSRect(
-            origin: .zero,
-            size: NSSize(
-                width: isOrbExpanded ? configurationManager.configuration.theme.dimensions.orbExpandedWidth : configurationManager.configuration.theme.dimensions.orbSize,
-                height: isOrbExpanded ? configurationManager.configuration.theme.dimensions.orbExpandedHeight : configurationManager.configuration.theme.dimensions.orbSize
-            )
-        )
+        orbHostingController?.view.frame = orbPanel?.frame ?? .zero
         orbHostingController?.view.needsLayout = true
     }
 
@@ -188,32 +199,20 @@ class WindowManager: ObservableObject {
         contentView.layer?.cornerCurve = .continuous
         contentView.layer?.masksToBounds = true
 
-        // Add frosted glass effect with NSVisualEffectView
-        let visualEffectView = NSVisualEffectView(frame: contentView.bounds)
-        visualEffectView.material = .hudWindow
-        visualEffectView.blendingMode = .behindWindow
-        visualEffectView.state = .active
-
-        // Configure blur and vibrancy
-        if let layer = visualEffectView.layer {
-            layer.masksToBounds = true
-            layer.cornerRadius = 16
-            layer.cornerCurve = .continuous
+        for subview in contentView.subviews {
+            subview.frame = contentView.bounds
+            subview.layer?.cornerRadius = 16
+            subview.layer?.cornerCurve = .continuous
         }
 
-        // Add blur layer
         let blurLayer = CALayer()
         blurLayer.frame = contentView.bounds
         blurLayer.backgroundColor = NSColor.black.withAlphaComponent(0.05).cgColor
         blurLayer.cornerRadius = 16
         blurLayer.cornerCurve = .continuous
         blurLayer.opacity = 0.15
-
-        // Add visual effect view as backing layer
-        visualEffectView.autoresizingMask = [.width, .height]
-        contentView.addSubview(visualEffectView, positioned: .below, relativeTo: orbHostingController?.view)
-
-        contentView.layer?.insertSublayer(blurLayer, at: 0)
+        blurLayer.autoresizingMask = [.layerWidthSizable, .layerHeightSizable]
+        contentView.layer?.addSublayer(blurLayer)
         contentView.layer?.backgroundColor = NSColor.clear.cgColor
     }
 
