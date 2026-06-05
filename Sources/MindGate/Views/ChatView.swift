@@ -19,34 +19,18 @@ struct ChatView: View {
     var body: some View {
         ZStack(alignment: .topTrailing) {
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color.white.opacity(0.28),
-                            Color.white.opacity(0.18),
-                            Color.white.opacity(0.12),
-                            Color.black.opacity(0.25)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+                .fill(.ultraThinMaterial.opacity(0.55))
                 .background(
                     RoundedRectangle(cornerRadius: 24, style: .continuous)
-                        .fill(.regularMaterial)
-                        .opacity(0.85)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 24, style: .continuous)
                         .fill(
-                            RadialGradient(
+                            LinearGradient(
                                 colors: [
-                                    Color.white.opacity(0.35),
+                                    Color.white.opacity(0.22),
+                                    Color.white.opacity(0.08),
                                     Color.clear
                                 ],
-                                center: UnitPoint(x: 0.3, y: 0.35),
-                                startRadius: 0,
-                                endRadius: 180
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
                             )
                         )
                 )
@@ -55,14 +39,14 @@ struct ChatView: View {
                         .stroke(
                             LinearGradient(
                                 colors: [
-                                    Color.white.opacity(0.5),
-                                    Color.white.opacity(0.3),
+                                    Color.white.opacity(0.25),
+                                    Color.white.opacity(0.12),
                                     Color.clear
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             ),
-                            lineWidth: 1.2
+                            lineWidth: 0.6
                         )
                 )
 
@@ -109,8 +93,6 @@ struct ChatView: View {
         .onAppear {
             startCountdown()
             NSApp.activate(ignoringOtherApps: true)
-            windowManager?.requestKeyboardFocus()
-            windowManager?.forceKeyboardFocus()
         }
         .onDisappear(perform: stopCountdown)
     }
@@ -160,23 +142,39 @@ struct ChatView: View {
         }) {
             Image(systemName: "xmark")
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(Color.white)
+                .foregroundStyle(Color.white.opacity(0.85))
                 .frame(width: 32, height: 32)
                 .background(
                     Circle()
-                        .fill(
+                        .fill(.ultraThinMaterial.opacity(0.45))
+                        .background(
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.white.opacity(0.2),
+                                            Color.clear
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                        )
+                )
+                .overlay(
+                    Circle()
+                        .stroke(
                             LinearGradient(
                                 colors: [
-                                    Color.white.opacity(0.35),
-                                    Color.white.opacity(0.2)
+                                    Color.white.opacity(0.22),
+                                    Color.clear
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
-                            )
+                            ),
+                            lineWidth: 0.5
                         )
-                        .background(.ultraThinMaterial.opacity(0.5))
                 )
-                .overlay(Circle().stroke(Color.white.opacity(0.3), lineWidth: 0.8))
         }
         .buttonStyle(.plain)
         .padding(.top, 32)
@@ -285,39 +283,47 @@ struct ChatView: View {
                 text: $userInput,
                 placeholder: "I need this because...",
                 onSubmit: submitRequest,
-                configuration: configuration
+                configuration: configuration,
+                windowManager: windowManager
             )
             .frame(height: 50)
 
             Button(action: submitRequest) {
                 Image(systemName: "arrow.up")
                     .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(Color.white)
+                    .foregroundStyle(Color.white.opacity(canSubmit ? 0.95 : 0.4))
                     .frame(width: 34, height: 34)
                     .background(
                         Circle()
-                            .fill(
-                                canSubmit
-                                ? LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.9),
-                                        Color.white.opacity(0.7)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                                : LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.25),
-                                        Color.white.opacity(0.15)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
+                            .fill(.ultraThinMaterial.opacity(canSubmit ? 0.65 : 0.3))
+                            .background(
+                                Circle()
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [
+                                                Color.white.opacity(canSubmit ? 0.3 : 0.08),
+                                                Color.clear
+                                            ],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
                             )
-                            .background(.ultraThinMaterial.opacity(0.5))
                     )
-                    .overlay(Circle().stroke(Color.white.opacity(canSubmit ? 0.4 : 0.2), lineWidth: 1))
+                    .overlay(
+                        Circle()
+                            .stroke(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(canSubmit ? 0.28 : 0.12),
+                                        Color.clear
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 0.6
+                            )
+                    )
             }
             .buttonStyle(.plain)
             .disabled(!canSubmit)
@@ -326,35 +332,38 @@ struct ChatView: View {
         .padding(6)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color.white.opacity(0.25),
-                            Color.white.opacity(0.15),
-                            Color.black.opacity(0.2)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
+                .fill(.thickMaterial.opacity(0.45))
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(0.18),
+                                    Color.white.opacity(0.04),
+                                    Color.clear
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
                 )
-                .background(.regularMaterial.opacity(0.7))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .stroke(
                     LinearGradient(
                         colors: [
-                            Color.white.opacity(0.4),
-                            Color.white.opacity(0.2),
-                            Color.white.opacity(0.1)
+                            Color.white.opacity(0.22),
+                            Color.white.opacity(0.1),
+                            Color.clear
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     ),
-                    lineWidth: 1.2
+                    lineWidth: 0.6
                 )
         )
-        .shadow(color: Color.black.opacity(0.3), radius: 20, x: 0, y: 10)
+        .shadow(color: Color.black.opacity(0.25), radius: 24, x: 0, y: 12)
     }
 
     private var canSubmit: Bool {
@@ -478,7 +487,7 @@ struct MinimalActionButtonStyle: ButtonStyle {
     func makeBody(configuration: Self.Configuration) -> some View {
         configuration.label
             .font(.system(size: 13, weight: .semibold, design: .rounded))
-            .foregroundStyle(Color.white)
+            .foregroundStyle(Color.white.opacity(0.9))
             .padding(.horizontal, 14)
             .frame(height: 36)
             .background(
@@ -486,20 +495,33 @@ struct MinimalActionButtonStyle: ButtonStyle {
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color.white.opacity(configuration.isPressed ? 0.25 : 0.35),
-                                Color.white.opacity(configuration.isPressed ? 0.15 : 0.25)
+                                Color.white.opacity(configuration.isPressed ? 0.28 : 0.35),
+                                Color.white.opacity(configuration.isPressed ? 0.16 : 0.22),
+                                Color.clear
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
+                        .opacity(0.7)
                     )
-                    .background(.ultraThinMaterial.opacity(0.5))
+                    .background(.ultraThinMaterial.opacity(0.45))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .stroke(Color.white.opacity(0.3), lineWidth: 0.8)
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.22),
+                                Color.white.opacity(0.1),
+                                Color.clear
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 0.5
+                    )
             )
-            .scaleEffect(configuration.isPressed ? 0.95 : 1)
+            .scaleEffect(configuration.isPressed ? 0.96 : 1)
             .animation(.easeInOut(duration: 0.15), value: configuration.isPressed)
     }
 }
@@ -510,23 +532,15 @@ private struct ReliablePromptTextView: NSViewRepresentable {
     let placeholder: String
     let onSubmit: () -> Void
     let configuration: Configuration
+    weak var windowManager: WindowManager?
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(text: $text, onSubmit: onSubmit, configuration: configuration)
+        Coordinator(text: $text, onSubmit: onSubmit, configuration: configuration, windowManager: windowManager)
     }
 
     func makeNSView(context: Context) -> NSView {
         let textView = PlaceholderTextView(configuration: configuration)
-        textView.placeholder = placeholder
         textView.delegate = context.coordinator
-        textView.isRichText = false
-        textView.importsGraphics = false
-        textView.isAutomaticQuoteSubstitutionEnabled = false
-        textView.isAutomaticDashSubstitutionEnabled = false
-        textView.isAutomaticTextReplacementEnabled = false
-        textView.allowsUndo = true
-        textView.isEditable = true
-        textView.isSelectable = true
         textView.font = NSFont.systemFont(ofSize: 13, weight: .regular)
         textView.textColor = NSColor(Color(hex: configuration.theme.colors.primary).opacity(0.9))
         textView.insertionPointColor = NSColor(Color(hex: configuration.theme.colors.primary))
@@ -537,8 +551,18 @@ private struct ReliablePromptTextView: NSViewRepresentable {
         textView.textContainer?.widthTracksTextView = true
         textView.isVerticallyResizable = true
         textView.isHorizontallyResizable = false
-        textView.isFieldEditor = false
+        textView.textContainer?.size.width = 280
         textView.string = text
+        textView.placeholder = placeholder
+        textView.isRichText = false
+        textView.importsGraphics = false
+        textView.isAutomaticQuoteSubstitutionEnabled = false
+        textView.isAutomaticDashSubstitutionEnabled = false
+        textView.isAutomaticTextReplacementEnabled = false
+        textView.allowsUndo = true
+        textView.isEditable = true
+        textView.isSelectable = true
+        textView.isFieldEditor = false
 
         let scrollView = NSScrollView(frame: NSRect(x: 0, y: 0, width: 280, height: 52))
         scrollView.documentView = textView
@@ -548,6 +572,11 @@ private struct ReliablePromptTextView: NSViewRepresentable {
         scrollView.borderType = NSBorderType.noBorder
         scrollView.drawsBackground = false
 
+        context.coordinator.register(textView: textView)
+        if let windowManager = windowManager {
+            windowManager.registerOrbTextView(textView)
+        }
+
         return scrollView
     }
 
@@ -555,37 +584,32 @@ private struct ReliablePromptTextView: NSViewRepresentable {
         guard let scrollView = nsView as? NSScrollView,
               let textView = scrollView.documentView as? PlaceholderTextView else { return }
 
-        textView.placeholder = placeholder
+        if textView.placeholder != placeholder {
+            textView.placeholder = placeholder
+        }
         if textView.string != text {
             textView.string = text
         }
         textView.needsDisplay = true
-
-        DispatchQueue.main.async {
-            guard let window = scrollView.window else { return }
-            NSApp.activate(ignoringOtherApps: true)
-            window.makeKeyAndOrderFront(nil)
-            window.makeMain()
-            window.makeFirstResponder(textView)
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            guard let window = scrollView.window else { return }
-            if window.firstResponder != textView {
-                NSApp.activate(ignoringOtherApps: true)
-                window.makeKeyAndOrderFront(nil)
-                window.makeMain()
-                window.makeFirstResponder(textView)
-            }
-        }
     }
 
     final class Coordinator: NSObject, NSTextViewDelegate {
         @Binding private var text: String
         private let onSubmit: () -> Void
+        private weak var windowManager: WindowManager?
+        private weak var registeredTextView: NSTextView?
 
-        init(text: Binding<String>, onSubmit: @escaping () -> Void, configuration: Configuration) {
+        init(text: Binding<String>, onSubmit: @escaping () -> Void, configuration: Configuration, windowManager: WindowManager?) {
             _text = text
             self.onSubmit = onSubmit
+            self.windowManager = windowManager
+        }
+
+        func register(textView: NSTextView) {
+            registeredTextView = textView
+            if let textView = textView.string as NSString? {
+                text = textView as String
+            }
         }
 
         func textDidChange(_ notification: Notification) {
@@ -601,6 +625,11 @@ private struct ReliablePromptTextView: NSViewRepresentable {
             }
 
             return false
+        }
+
+        func textDidEndEditing(_ notification: Notification) {
+            guard let textView = notification.object as? NSTextView else { return }
+            text = textView.string
         }
     }
 }

@@ -137,7 +137,7 @@ struct UITheme: Codable {
             secondary: "FFFFFFB3",
             accent: "FFFFFF99",
             background: "000000",
-            surface: "000000",
+            surface: "FFFFFF12",
             text: "FFFFFF",
             textSecondary: "FFFFFFB3",
             error: "FF453A",

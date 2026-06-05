@@ -63,25 +63,46 @@ struct FlowingLinesView: View {
 
     var body: some View {
         ZStack {
-            LinearGradient(
-                colors: [
-                    Color(hex: configuration.theme.colors.background).opacity(0.98),
-                    Color(hex: configuration.theme.colors.background).opacity(0.92)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
+            RoundedRectangle(cornerRadius: size * 0.5, style: .continuous)
+                .fill(.ultraThinMaterial.opacity(0.5))
+                .background(
+                    RoundedRectangle(cornerRadius: size * 0.5, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color(hex: configuration.theme.colors.primary).opacity(0.08),
+                                    Color.clear
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: size * 0.5, style: .continuous)
+                        .stroke(
+                            LinearGradient(
+                                colors: [
+                                    Color(hex: configuration.theme.colors.primary).opacity(0.18),
+                                    Color.clear
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 0.5
+                        )
+                )
 
             RadialGradient(
                 colors: [
-                    Color(hex: configuration.theme.colors.primary).opacity(glowEffect),
+                    Color(hex: configuration.theme.colors.primary).opacity(glowEffect * 0.6),
                     Color.clear
                 ],
                 center: .center,
                 startRadius: 0,
-                endRadius: size * 0.6
+                endRadius: size * 0.45
             )
-            .blur(radius: 20)
+            .blur(radius: 16)
 
             ZStack {
                 ForEach(0..<3, id: \.self) { index in
@@ -92,10 +113,10 @@ struct FlowingLinesView: View {
                         yOffset: CGFloat(index - 1) * 12
                     )
                     .stroke(
-                        Color(hex: configuration.theme.colors.primary).opacity(0.15 - CGFloat(index) * 0.03),
-                        lineWidth: 2
+                        Color(hex: configuration.theme.colors.primary).opacity(0.1 - CGFloat(index) * 0.02),
+                        lineWidth: 1.5
                     )
-                    .blur(radius: 1.5)
+                    .blur(radius: 1.2)
                 }
 
                 ForEach(0..<5, id: \.self) { index in
@@ -106,10 +127,10 @@ struct FlowingLinesView: View {
                         yOffset: CGFloat(index - 2) * 10
                     )
                     .stroke(
-                        Color(hex: configuration.theme.colors.primary).opacity(0.5 - CGFloat(index) * 0.07),
-                        lineWidth: 1.8
+                        Color(hex: configuration.theme.colors.primary).opacity(0.35 - CGFloat(index) * 0.06),
+                        lineWidth: 1.5
                     )
-                    .blur(radius: 0.8)
+                    .blur(radius: 0.7)
                 }
 
                 ForEach(0..<2, id: \.self) { index in
@@ -120,8 +141,8 @@ struct FlowingLinesView: View {
                         yOffset: (CGFloat(index) - 0.5) * 15
                     )
                     .stroke(
-                        Color(hex: configuration.theme.colors.primary).opacity(0.7 - CGFloat(index) * 0.1),
-                        lineWidth: 1.2
+                        Color(hex: configuration.theme.colors.primary).opacity(0.55 - CGFloat(index) * 0.1),
+                        lineWidth: 1
                     )
                 }
             }
