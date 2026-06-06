@@ -77,6 +77,7 @@ function createWindows() {
     movable: false,
     hasShadow: false,
     focusable: true,
+    acceptsFirstMouse: true,
     minimizable: false,
     maximizable: false,
     show: false,

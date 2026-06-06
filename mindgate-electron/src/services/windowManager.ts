@@ -63,6 +63,7 @@ export class WindowManager {
       movable: false,
       hasShadow: false,
       focusable: true,
+      acceptsFirstMouse: true,
       minimizable: false,
       maximizable: false,
       webPreferences: {
@@ -86,7 +87,8 @@ export class WindowManager {
       resizable: false,
       movable: false,
       hasShadow: false,
-      focusable: false
+      focusable: false,
+      acceptsFirstMouse: false
     });
 
     this.overlayWindow.setIgnoreMouseEvents(true);

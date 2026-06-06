@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Configuration, DecisionResult } from '../../types';
 
@@ -16,6 +16,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ configuration, onS
   const [showDeniedMessage, setShowDeniedMessage] = useState(false);
   const [countdownSeconds, setCountdownSeconds] = useState(0);
   const [remainingAccessTime, setRemainingAccessTime] = useState<number | null>(null);
+  const [isTextareaFocused, setIsTextareaFocused] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -39,6 +41,24 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ configuration, onS
   useEffect(() => {
     startCountdown();
   }, []);
+
+  useEffect(() => {
+    if (
+      !showDurationSelection &&
+      !showDeniedMessage &&
+      !isLoading &&
+      !aiResponse &&
+      textareaRef.current
+    ) {
+      const timer = setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [showDurationSelection, showDeniedMessage, isLoading, aiResponse]);
+
+  const handleTextareaFocus = () => setIsTextareaFocused(true);
+  const handleTextareaBlur = () => setIsTextareaFocused(false);
 
   const handleSubmit = async () => {
     if (!userInput.trim() || isLoading) return;
@@ -291,21 +311,33 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ configuration, onS
                 maxWidth: '100%'
               }}>
                 <textarea
+                  ref={textareaRef}
                   value={userInput}
                   onChange={(e) => setUserInput(e.target.value)}
+                  onFocus={handleTextareaFocus}
+                  onBlur={handleTextareaBlur}
                   placeholder="I need this because..."
                   style={{
                     flex: 1,
                     background: 'transparent',
-                    border: 'none',
+                    border: isTextareaFocused ? '1px solid rgba(255,255,255,0.6)' : 'none',
                     color: 'rgba(255,255,255,0.9)',
                     fontSize: 13,
                     resize: 'none',
                     outline: 'none',
                     minHeight: 50,
-                    padding: '8px 12px'
+                    padding: '8px 12px',
+                    borderRadius: isTextareaFocused ? 10 : 0,
+                    boxShadow: isTextareaFocused ? 'inset 0 0 0 1px rgba(255,255,255,0.25)' : 'none',
+                    transition: 'border-color 0.15s ease, box-shadow 0.15s ease, border-radius 0.15s ease'
                   }}
-                  onKeyDown={(e) => e.metaKey && e.key === 'Enter' && handleSubmit()}
+                  onKeyDown={(e) => {
+                    const isMetaOrCtrl = e.metaKey || e.ctrlKey;
+                    if (isMetaOrCtrl && e.key === 'Enter') {
+                      e.preventDefault();
+                      handleSubmit();
+                    }
+                  }}
                 />
                 <button
                   onClick={handleSubmit}
