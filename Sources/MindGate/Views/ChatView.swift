@@ -650,10 +650,12 @@ private final class PlaceholderTextView: NSTextView {
 
     override func becomeFirstResponder() -> Bool {
         let result = super.becomeFirstResponder()
+        print("PlaceholderTextView becomeFirstResponder -> \(result)")
         return result
     }
 
     override func mouseDown(with event: NSEvent) {
+        print("PlaceholderTextView mouseDown")
         window?.makeKeyAndOrderFront(nil)
         window?.makeFirstResponder(self)
         super.mouseDown(with: event)
