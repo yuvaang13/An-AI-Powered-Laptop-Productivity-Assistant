@@ -32,3 +32,4 @@ npm run dist
 - Local AI evaluation via Ollama
 - System tray integration
 - Persistent configuration
+- Takeover view with productive suggestions when access is denied

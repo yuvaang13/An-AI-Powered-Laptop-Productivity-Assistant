@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Configuration, DecisionResult } from '../../types';
+import { TakeoverView } from '../takeover/TakeoverView';
 
 interface ChatInterfaceProps {
   configuration: Configuration;
@@ -14,6 +15,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ configuration, onS
   const [aiResponse, setAiResponse] = useState('');
   const [showDurationSelection, setShowDurationSelection] = useState(false);
   const [showDeniedMessage, setShowDeniedMessage] = useState(false);
+  const [showTakeoverView, setShowTakeoverView] = useState(false);
   const [countdownSeconds, setCountdownSeconds] = useState(0);
   const [remainingAccessTime, setRemainingAccessTime] = useState<number | null>(null);
   const [isTextareaFocused, setIsTextareaFocused] = useState(false);
@@ -94,17 +96,20 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ configuration, onS
       if (!result) {
         setAiResponse('No response received');
         setShowDeniedMessage(true);
+        handleDeniedMessageDismissed();
       } else if (result.isApproved) {
         setAiResponse(result.message);
         setShowDurationSelection(true);
       } else {
         setAiResponse(result.message);
         setShowDeniedMessage(true);
+        handleDeniedMessageDismissed();
       }
     } catch (error) {
       console.error('Error submitting user input:', error);
       setAiResponse('Error: Unable to get AI response');
       setShowDeniedMessage(true);
+      handleDeniedMessageDismissed();
     }
     setIsLoading(false);
   };
@@ -146,8 +151,25 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ configuration, onS
     setIsLoading(false);
     setShowDurationSelection(false);
     setShowDeniedMessage(false);
+    setShowTakeoverView(false);
     setCountdownSeconds(0);
     console.debug('State reset');
+  };
+
+  const resetStateWithRetry = () => {
+    setUserInput('');
+    setAiResponse('');
+    setIsLoading(false);
+    setShowDurationSelection(false);
+    setShowDeniedMessage(false);
+    setShowTakeoverView(false);
+    setCountdownSeconds(configuration.settings.justificationCountdownDuration);
+    startCountdown();
+  };
+
+  const handleDeniedMessageDismissed = () => {
+    window.mindgateAPI.closeDistraction();
+    setShowTakeoverView(true);
   };
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -338,6 +360,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ configuration, onS
                 {showDeniedMessage ? 'Try Again' : 'Close'}
               </button>
             </motion.div>
+          ) : showTakeoverView ? (
+            <TakeoverView
+              configuration={configuration}
+              onDismiss={() => {
+                setShowTakeoverView(false);
+                onClose();
+              }}
+            />
           ) : (
             <motion.div
               key="input"

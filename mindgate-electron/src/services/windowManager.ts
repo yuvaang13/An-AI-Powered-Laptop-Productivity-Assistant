@@ -120,6 +120,14 @@ export class WindowManager {
     );
     this.orbWindow?.show();
     this.orbWindow?.focus();
+    
+    // CRITICAL: Focus webContents to ensure keyboard input is received
+    this.orbWindow?.webContents?.focus();
+    
+    // Backup focus after a small delay to handle race conditions
+    setTimeout(() => {
+      this.orbWindow?.webContents?.focus();
+    }, 50);
   }
 
   hideOrb() {
@@ -143,6 +151,10 @@ export class WindowManager {
       this.overlayWindow.setPosition(Math.round(window.frame.x), Math.round(window.frame.y));
       this.overlayWindow.setSize(Math.round(window.frame.width), Math.round(window.frame.height));
     }
+    
+    // Ensure overlay ignores mouse events so it doesn't intercept input
+    this.overlayWindow?.setIgnoreMouseEvents(true);
+    
     this.overlayWindow?.show();
     this.orbWindow?.webContents.send('show-overlay');
   }

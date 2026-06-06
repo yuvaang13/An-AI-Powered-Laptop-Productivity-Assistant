@@ -23,7 +23,7 @@ A futuristic, on-device AI productivity assistant that helps you stay focused by
 
 ## Installation
 
-### Electron (Cross-Platform - Recommended)
+### Electron (Cross-Platform)
 
 1. Clone this repository:
 ```bash
@@ -51,14 +51,6 @@ npm run dev
 5. Build for production:
 ```bash
 npm run dist
-```
-
-### Swift (macOS Only - Legacy)
-
-```bash
-# From the root directory
-swift build
-swift run
 ```
 
 ## Usage

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Tray, screen, Menu, nativeImage, systemPreferences } from 'electron';
+import { app, BrowserWindow, ipcMain, Tray, screen, Menu, nativeImage, systemPreferences, shell } from 'electron';
 import { join } from 'path';
 import { ConfigurationService } from './src/services/configurationService';
 import { DecisionEngine } from './src/services/decisionEngine';
@@ -199,6 +199,18 @@ function setupIPC() {
 
   ipcMain.handle('get-remaining-access-time', () => {
     return decisionEngine.getRemainingTime();
+  });
+
+  ipcMain.handle('launch-url', (_event, url: string) => {
+    shell.openExternal(url);
+  });
+
+  ipcMain.handle('launch-app', (_event, appName: string) => {
+    const appPath = join('/Applications', `${appName}.app`);
+    shell.openPath(appPath).catch(err => {
+      console.error('Failed to launch app:', err);
+      shell.openExternal(`https://www.google.com`);
+    });
   });
 
   setInterval(async () => {

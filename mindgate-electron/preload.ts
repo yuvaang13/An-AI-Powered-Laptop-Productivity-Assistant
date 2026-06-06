@@ -13,6 +13,8 @@ contextBridge.exposeInMainWorld('mindgateAPI', {
   getRemainingAccessTime: () => ipcRenderer.invoke('get-remaining-access-time'),
   checkAccessibilityPermission: () => ipcRenderer.invoke('check-accessibility-permission'),
   requestAccessibilityPermission: () => ipcRenderer.invoke('request-accessibility-permission'),
+  launchURL: (url: string) => ipcRenderer.invoke('launch-url', url),
+  launchApp: (appName: string) => ipcRenderer.invoke('launch-app', appName),
 
   onShowOrb: (callback: () => void) => {
     ipcRenderer.on('show-orb', callback);
@@ -49,6 +51,8 @@ declare global {
       getRemainingAccessTime: () => Promise<number>;
       checkAccessibilityPermission: () => Promise<boolean>;
       requestAccessibilityPermission: () => Promise<void>;
+      launchURL: (url: string) => void;
+      launchApp: (appName: string) => void;
       onShowOrb: (callback: () => void) => void;
       onHideOrb: (callback: () => void) => void;
       onShowOverlay: (callback: () => void) => void;
