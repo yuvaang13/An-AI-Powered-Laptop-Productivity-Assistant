@@ -362,6 +362,7 @@ struct ChatView: View {
                     ),
                     lineWidth: 0.6
                 )
+                .allowsHitTesting(false)
         )
         .shadow(color: Color.black.opacity(0.25), radius: 16, x: 0, y: 8)
     }
