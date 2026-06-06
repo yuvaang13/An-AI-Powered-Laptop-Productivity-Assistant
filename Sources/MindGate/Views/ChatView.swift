@@ -558,25 +558,16 @@ private struct ReliablePromptTextView: NSViewRepresentable {
         textView.setSelectedRange(NSRange(location: endPosition, length: 0))
         textView.needsDisplay = true
 
-        let scrollView = NSScrollView(frame: NSRect(x: 0, y: 0, width: 280, height: 52))
-        scrollView.documentView = textView
-        scrollView.hasVerticalScroller = false
-        scrollView.hasHorizontalScroller = false
-        scrollView.autoresizingMask = [.width, .height]
-        scrollView.borderType = NSBorderType.noBorder
-        scrollView.drawsBackground = false
-
         context.coordinator.register(textView: textView)
         if let windowManager = windowManager {
             windowManager.registerOrbTextView(textView)
         }
 
-        return scrollView
+        return textView
     }
 
     func updateNSView(_ nsView: NSView, context: Context) {
-        guard let scrollView = nsView as? NSScrollView,
-              let textView = scrollView.documentView as? PlaceholderTextView else { return }
+        guard let textView = nsView as? PlaceholderTextView else { return }
 
         if textView.placeholder != placeholder {
             textView.placeholder = placeholder
