@@ -89,7 +89,6 @@ struct ChatView: View {
             closeButton
         }
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .contentShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .onAppear {
             startCountdown()
             NSApp.activate(ignoringOtherApps: true)
