@@ -90,15 +90,18 @@ export class WindowManager {
   }
 
   showOrb(targetWindow?: ActiveWindowInfo) {
+    console.log('showOrb called with target:', targetWindow?.processName);
     if (targetWindow && targetWindow.frame.width > 0) {
       this.targetWindowFrame = targetWindow.frame;
     }
 
     if (!this.orbWindow) {
+      console.log('Creating new orb window');
       this.createOrbWindow();
     }
 
     if (this.targetWindowFrame && this.targetWindowFrame.width > 0) {
+      console.log('Positioning orb at:', this.targetWindowFrame.x, this.targetWindowFrame.width);
       this.orbWindow?.setPosition(
         Math.round(this.targetWindowFrame.x + this.targetWindowFrame.width - this.configuration.theme.dimensions.orbExpandedWidth - this.configuration.theme.dimensions.orbXOffset),
         Math.round(this.targetWindowFrame.y + this.configuration.theme.dimensions.orbYOffset)
@@ -111,6 +114,7 @@ export class WindowManager {
     );
     this.orbWindow?.show();
     this.orbWindow?.focus();
+    console.log('Orb window shown and focused');
     
     // CRITICAL: Focus webContents to ensure keyboard input is received
     this.orbWindow?.webContents?.focus();

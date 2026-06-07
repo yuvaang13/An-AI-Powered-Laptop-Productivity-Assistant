@@ -7,6 +7,7 @@ const execAsync = promisify(exec);
 export class MacMonitor {
   async getActiveWindow(): Promise<ActiveWindowInfo | null> {
     try {
+      console.log('Getting active window via AppleScript');
       const script = `
 tell application "System Events"
   set frontApp to name of first application process whose frontmost is true
