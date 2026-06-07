@@ -34,3 +34,9 @@ xcuserdata/
 *.tmp
 *.temp
 .kilo/plans/
+
+# Node.js/Electron
+node_modules/
+dist/
+*.js
+*.js.map

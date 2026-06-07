@@ -135,30 +135,30 @@ export const Settings: React.FC<SettingsProps> = ({ configuration, onClose }) =>
       <section style={{ marginBottom: 24 }}>
         <h2 style={{ fontSize: 16, marginBottom: 12 }}>Access Durations (seconds)</h2>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {settings.accessDurationLabels.map((label, index) => (
-            <div key={index} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <input
-                type="number"
-                value={settings.accessDurations[index] / 60}
-                onChange={(e) => {
-                  const minutes = parseInt(e.target.value, 10) || 0;
-                  const newDurations = [...settings.accessDurations];
-                  newDurations[index] = minutes * 60;
-                  setSettings({ ...settings, accessDurations: newDurations });
-                }}
-                style={{
-                  width: 60,
-                  background: '#2a2a2a',
-                  border: '1px solid #444',
-                  borderRadius: 8,
-                  color: 'white',
-                  padding: 8,
-                  fontSize: 14
-                }}
-              />
-              <span>min</span>
-            </div>
-          ))}
+{settings.accessDurationLabels.map((label, index) => (
+             <div key={index} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+               <input
+                 type="number"
+                 value={settings.accessDurations[index] / 60}
+                 onChange={(e) => {
+                   const minutes = parseInt(e.target.value, 10) || 0;
+                   const newDurations = [...settings.accessDurations];
+                   newDurations[index] = minutes * 60;
+                   setSettings({ ...settings, accessDurations: newDurations });
+                 }}
+                 style={{
+                   width: 60,
+                   background: '#2a2a2a',
+                   border: '1px solid #444',
+                   borderRadius: 8,
+                   color: 'white',
+                   padding: 8,
+                   fontSize: 14
+                 }}
+               />
+               <span>min ({label})</span>
+             </div>
+           ))}
         </div>
       </section>
 

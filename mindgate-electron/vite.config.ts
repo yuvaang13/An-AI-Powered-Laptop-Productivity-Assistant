@@ -10,7 +10,8 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: './public/index.html'
-      }
+      },
+      external: ['child_process', 'util', 'fs', 'path']
     }
   },
   server: {

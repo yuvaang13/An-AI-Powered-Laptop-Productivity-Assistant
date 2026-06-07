@@ -4,7 +4,6 @@ export class OllamaService {
   private baseURL: string;
   private model: string;
   private retryCount: number = 0;
-  private maxRetries: number = 5;
   private baseRetryDelay: number = 1000;
 
   constructor(baseURL: string, model: string) {
@@ -51,7 +50,7 @@ export class OllamaService {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-async evaluateRequest(userInput: string): Promise<DecisionResult> {
+  async evaluateRequest(userInput: string): Promise<DecisionResult> {
     try {
       const response = await fetch(this.baseURL, {
         method: 'POST',
@@ -95,10 +94,10 @@ async evaluateRequest(userInput: string): Promise<DecisionResult> {
     }
   }
 
-  async generateRawResponse(prompt: string, maxRetries: number = 3): Promise<string> {
+  async generateRawResponse(prompt: string, _maxRetries: number = 3): Promise<string> {
     let lastError: Error | null = null;
     
-    for (let attempt = 0; attempt < maxRetries; attempt++) {
+    for (let attempt = 0; attempt < _maxRetries; attempt++) {
       try {
         const response = await fetch(this.baseURL, {
           method: 'POST',
@@ -125,7 +124,7 @@ async evaluateRequest(userInput: string): Promise<DecisionResult> {
         return (data.response || '').trim();
       } catch (error) {
         lastError = error instanceof Error ? error : new Error('Unknown error');
-        if (attempt < maxRetries - 1) {
+        if (attempt < _maxRetries - 1) {
           this.retryCount++;
           const delay = this.getRetryDelay();
           await this.sleep(delay);

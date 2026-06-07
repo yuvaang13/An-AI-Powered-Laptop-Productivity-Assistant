@@ -22,11 +22,8 @@ cd "$ELECTRON_DIR"
 log "📦  Installing npm dependencies..."
 npm install
 
-log "🏗️  Building the project (npm run build)..."
+log "🏗️  Building the project..."
 npm run build
-
-log "📦  Creating production package (npm run dist)..."
-npm run dist
 
 log "🚀  Launching MindGate..."
 electron .

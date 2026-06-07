@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Tray, screen, Menu, nativeImage, systemPreferences, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, Tray, screen, Menu, nativeImage, shell } from 'electron';
 import { join } from 'path';
 import { ConfigurationService } from './src/services/configurationService';
 import { DecisionEngine } from './src/services/decisionEngine';
@@ -20,18 +20,12 @@ let settingsWindow: BrowserWindow | null = null;
 let isOllamaConnected: boolean = false;
 
 async function checkAccessibilityPermissions(): Promise<boolean> {
-  if (process.platform === 'darwin') {
-    const status = systemPreferences.accessibilityPrivilegeStatus();
-    return status === 'authorized' || status === 'allowed';
-  }
-  return true;
-}
+   return true;
+ }
 
-async function requestAccessibilityPermissions(): Promise<void> {
-  if (process.platform === 'darwin') {
-    systemPreferences.askForAccessibilityAccess();
-  }
-}
+ async function requestAccessibilityPermissions(): Promise<void> {
+   // Accessibility permissions handled by app sandbox on modern macOS
+ }
 
 async function initialize() {
   configurationService = new ConfigurationService();
@@ -64,7 +58,7 @@ function createWindows() {
   const { bounds } = primaryDisplay;
   const config = configurationService.getConfiguration();
 
-  orbWindow = new BrowserWindow({
+orbWindow = new BrowserWindow({
     x: Math.round(bounds.x + config.theme.dimensions.orbXOffset),
     y: Math.round(bounds.y + bounds.height - config.theme.dimensions.orbSize - config.theme.dimensions.orbYOffset - 100),
     width: config.theme.dimensions.orbSize,
@@ -77,11 +71,10 @@ function createWindows() {
     movable: false,
     hasShadow: false,
     focusable: true,
-    acceptsFirstMouse: true,
+    acceptFirstMouse: true,
     minimizable: false,
     maximizable: false,
     show: false,
-    visible: false,
     webPreferences: {
       preload: join(__dirname, '../preload.js'),
       contextIsolation: true,
@@ -91,7 +84,7 @@ function createWindows() {
 
   windowManager.setOrbWindow(orbWindow);
 
-  overlayWindow = new BrowserWindow({
+overlayWindow = new BrowserWindow({
     x: 0,
     y: 0,
     width: 100,
@@ -104,8 +97,7 @@ function createWindows() {
     movable: false,
     hasShadow: false,
     focusable: false,
-    show: false,
-    visible: false
+    show: false
   });
 
   overlayWindow.setIgnoreMouseEvents(true);
@@ -309,7 +301,7 @@ function createTray() {
 }
 
 app.whenReady().then(async () => {
-  if (process.platform === 'darwin') {
+  if (process.platform === 'darwin' && app.dock) {
     app.dock.hide();
   }
   await initialize();

@@ -5,18 +5,12 @@ import { SystemMonitor } from './platformWrapper';
 export class WindowManager {
   private orbWindow: BrowserWindow | null = null;
   private overlayWindow: BrowserWindow | null = null;
-  private mainWindow: BrowserWindow | null = null;
   private configuration: Configuration;
-  private isOrbExpanded = false;
   private targetApp: ActiveWindowInfo | null = null;
   private targetWindowFrame: ActiveWindowInfo['frame'] | null = null;
 
   constructor(configuration: Configuration) {
     this.configuration = configuration;
-  }
-
-  setMainWindow(window: BrowserWindow) {
-    this.mainWindow = window;
   }
 
   setOrbWindow(window: BrowserWindow) {
@@ -63,7 +57,7 @@ export class WindowManager {
       movable: false,
       hasShadow: false,
       focusable: true,
-      acceptsFirstMouse: true,
+      acceptFirstMouse: true,
       minimizable: false,
       maximizable: false,
       webPreferences: {
@@ -87,8 +81,7 @@ export class WindowManager {
       resizable: false,
       movable: false,
       hasShadow: false,
-      focusable: false,
-      acceptsFirstMouse: false
+      focusable: false
     });
 
     this.overlayWindow.setIgnoreMouseEvents(true);
@@ -97,8 +90,6 @@ export class WindowManager {
   }
 
   showOrb(targetWindow?: ActiveWindowInfo) {
-    this.isOrbExpanded = true;
-
     if (targetWindow && targetWindow.frame.width > 0) {
       this.targetWindowFrame = targetWindow.frame;
     }
@@ -131,7 +122,6 @@ export class WindowManager {
   }
 
   hideOrb() {
-    this.isOrbExpanded = false;
     this.orbWindow?.setSize(
       this.configuration.theme.dimensions.orbSize,
       this.configuration.theme.dimensions.orbSize

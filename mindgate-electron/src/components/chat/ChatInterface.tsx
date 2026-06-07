@@ -44,7 +44,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ configuration, onS
     startCountdown();
   }, []);
 
-  // Enhanced focus management: focus textarea when in input view
   useEffect(() => {
     if (
       !showDurationSelection &&
@@ -53,13 +52,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ configuration, onS
       !aiResponse &&
       textareaRef.current
     ) {
-      // Ensure focus is set immediately and persist it
       textareaRef.current.focus();
       console.debug('Textarea focused in input view');
     }
   }, [showDurationSelection, showDeniedMessage, isLoading, aiResponse]);
 
-  // Add click handler to ensure textarea always receives focus on click
   useEffect(() => {
     const textarea = textareaRef.current;
     if (!textarea) return;
@@ -139,7 +136,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ configuration, onS
 
   const selectDuration = (index: number) => {
     console.debug(`Duration selected: index ${index}`);
-    const duration = configuration.settings.accessDurations[index];
     window.mindgateAPI.grantAccess(index);
     onClose();
     resetState();
@@ -154,17 +150,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ configuration, onS
     setShowTakeoverView(false);
     setCountdownSeconds(0);
     console.debug('State reset');
-  };
-
-  const resetStateWithRetry = () => {
-    setUserInput('');
-    setAiResponse('');
-    setIsLoading(false);
-    setShowDurationSelection(false);
-    setShowDeniedMessage(false);
-    setShowTakeoverView(false);
-    setCountdownSeconds(configuration.settings.justificationCountdownDuration);
-    startCountdown();
   };
 
   const handleDeniedMessageDismissed = () => {
@@ -334,7 +319,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ configuration, onS
               exit={{ opacity: 0, y: -10 }}
               style={{ textAlign: 'center', pointerEvents: 'auto' }}
             >
-              <TypingText text={aiResponse} configuration={configuration} />
+              <TypingText text={aiResponse} />
               <button
                 onClick={() => {
                   if (showDeniedMessage) {
@@ -465,10 +450,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ configuration, onS
 
 interface TypingTextProps {
   text: string;
-  configuration: Configuration;
 }
 
-const TypingText: React.FC<TypingTextProps> = ({ text, configuration }) => {
+const TypingText: React.FC<TypingTextProps> = ({ text }) => {
   const [displayedText, setDisplayedText] = React.useState('');
 
   React.useEffect(() => {

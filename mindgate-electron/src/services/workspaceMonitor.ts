@@ -71,7 +71,6 @@ export class WorkspaceMonitor {
 
   private isDistracting(window: ActiveWindowInfo): boolean {
     const processName = window.processName.toLowerCase();
-    const windowTitle = window.windowTitle.toLowerCase();
     const bundleID = window.bundleID?.toLowerCase() || '';
     const exeName = window.exeName?.toLowerCase() || '';
 
@@ -102,7 +101,7 @@ export class WorkspaceMonitor {
     const windowTitle = window.windowTitle.toLowerCase();
 
     return this.configuration.settings.restrictedKeywords.some(kw =>
-      windowTitle.includes(kw.toLowerCase())
+      windowTitle.includes(kw.toLowerCase()) || kw.toLowerCase().includes(windowTitle)
     );
   }
 

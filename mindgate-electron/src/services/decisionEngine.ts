@@ -72,13 +72,6 @@ Current productive apps: ${this.configuration.settings.productiveApps.join(', ')
     this.onAccessExpired?.(expiredIdentifier);
   }
 
-  private revokeAccess(): void {
-    this.accessTimer && clearTimeout(this.accessTimer);
-    this.accessTimer = null;
-    this.grantedAppIdentifier = null;
-    this.accessExpiresAt = null;
-  }
-
   hasActiveAccess(app: ActiveWindowInfo): boolean {
     if (!this.grantedAppIdentifier || !this.accessExpiresAt) {
       return false;
