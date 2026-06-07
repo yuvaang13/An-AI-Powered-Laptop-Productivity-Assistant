@@ -34,8 +34,11 @@ export class WorkspaceMonitor {
 
     const activeWindow = await this.monitor.getActiveWindow();
     if (!activeWindow) {
+      console.log('No active window detected');
       return false;
     }
+
+    console.log('Active window:', activeWindow.processName, '| Title:', activeWindow.windowTitle);
 
     if (activeWindow.processName === this.lastWindow?.processName &&
         activeWindow.windowTitle === this.lastWindow?.windowTitle) {
@@ -45,7 +48,10 @@ export class WorkspaceMonitor {
     this.lastWindow = activeWindow;
     const identifier = this.getAppIdentifier(activeWindow);
 
-    if (this.isDistracting(activeWindow)) {
+    const isDistracting = this.isDistracting(activeWindow);
+    console.log('Is distracting?', isDistracting);
+
+    if (isDistracting) {
       const timeSinceLastPrompt = now - this.lastPromptTime;
       if (timeSinceLastPrompt > this.promptRepeatInterval || this.lastPromptTime === 0) {
         this.lastPromptTime = now;
@@ -109,8 +115,10 @@ export class WorkspaceMonitor {
   onClearPrompt?: () => void;
 
   startMonitoring(intervalMs: number = 1000): void {
-    setInterval(() => {
-      this.checkWorkspace();
+    console.log('Workspace monitoring started');
+    setInterval(async () => {
+      const result = await this.checkWorkspace();
+      console.log('Workspace check completed, distraction:', result);
     }, intervalMs);
   }
 }

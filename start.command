@@ -26,6 +26,6 @@ log "🏗️  Building the project..."
 npm run build
 
 log "🚀  Launching MindGate..."
-electron .
+npx electron .
 
 log "✅  MindGate started successfully."
