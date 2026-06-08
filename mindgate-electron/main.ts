@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Tray, screen, Menu, nativeImage, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, Tray, screen, Menu, nativeImage, shell, systemPreferences } from 'electron';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { ConfigurationService } from './src/services/configurationService.js';
@@ -23,14 +23,20 @@ let settingsWindow: BrowserWindow | null = null;
 let isOllamaConnected: boolean = false;
 
 async function checkAccessibilityPermissions(): Promise<boolean> {
-   return true;
- }
+  if (process.platform !== 'darwin') return true;
+  return systemPreferences.isTrustedAccessibilityClient(false);
+}
 
-  async function requestAccessibilityPermissions(): Promise<void> {
-    console.log('Accessibility permissions requested');
- }
+async function requestAccessibilityPermissions(): Promise<void> {
+  if (process.platform !== 'darwin') return;
+  // Calling with prompt=true shows the system accessibility permission dialog
+  systemPreferences.isTrustedAccessibilityClient(true);
+  if (!systemPreferences.isTrustedAccessibilityClient(false)) {
+    tray?.setToolTip('MindGate - Grant Accessibility permission in System Settings > Privacy & Security > Accessibility');
+  }
+}
 
- async function initialize() {
+async function initialize() {
    configurationService = new ConfigurationService();
 
    systemMonitor = new SystemMonitor();
@@ -43,6 +49,7 @@ async function checkAccessibilityPermissions(): Promise<boolean> {
      configurationService.getConfiguration(),
      systemMonitor
    );
+   workspaceMonitor.setDecisionEngine(decisionEngine);
 
    createWindows();
    setupIPC();
@@ -53,6 +60,11 @@ async function checkAccessibilityPermissions(): Promise<boolean> {
    if (!isOllamaConnected) {
      tray?.setTitle('⚠️');
      tray?.setToolTip('MindGate - Ollama not connected. Please start Ollama.');
+   }
+
+   const hasPermission = await checkAccessibilityPermissions();
+   if (!hasPermission && orbWindow) {
+     orbWindow.show();
    }
  }
 
@@ -134,8 +146,9 @@ function setupIPC() {
    });
 
    ipcMain.handle('request-accessibility-permission', async () => {
-     await requestAccessibilityPermissions();
-   });
+      await requestAccessibilityPermissions();
+      return await checkAccessibilityPermissions();
+    });
 
    ipcMain.handle('evaluate-request', async (_event, userInput: string) => {
      const connected = await decisionEngine.checkOllamaConnection();

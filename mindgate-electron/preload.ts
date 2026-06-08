@@ -50,7 +50,7 @@ declare global {
       updateSettings: (settings: Partial<Configuration['settings']>) => void;
       getRemainingAccessTime: () => Promise<number>;
       checkAccessibilityPermission: () => Promise<boolean>;
-      requestAccessibilityPermission: () => Promise<void>;
+      requestAccessibilityPermission: () => Promise<boolean>;
       launchURL: (url: string) => void;
       launchApp: (appName: string) => void;
       onShowOrb: (callback: () => void) => void;

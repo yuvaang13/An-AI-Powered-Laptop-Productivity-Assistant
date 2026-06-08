@@ -83,7 +83,15 @@ const App: React.FC = () => {
           fontSize: 12,
           zIndex: 99999,
           cursor: 'pointer'
-        }} onClick={() => window.mindgateAPI.requestAccessibilityPermission()}>
+        }} onClick={async () => {
+          const granted = await window.mindgateAPI.requestAccessibilityPermission();
+          if (granted) {
+            setHasAccessibilityAccess(true);
+          } else {
+            const recheck = await window.mindgateAPI.checkAccessibilityPermission();
+            setHasAccessibilityAccess(recheck);
+          }
+        }}>
           Accessibility Permission Needed - Click to Grant
         </div>
       )}

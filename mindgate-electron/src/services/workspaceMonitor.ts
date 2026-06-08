@@ -1,19 +1,26 @@
 import type { ActiveWindowInfo, Configuration } from '../types.js';
+import type { DecisionEngine } from './decisionEngine.js';
 import type { SystemMonitor } from './platformWrapper.js';
 
 export class WorkspaceMonitor {
   private monitor: SystemMonitor;
   private configuration: Configuration;
+  private decisionEngine: DecisionEngine | null = null;
   private lastCheckTime: number = 0;
   private lastWindow: ActiveWindowInfo | null = null;
   private debounceInterval: number = 0.75;
   private promptRepeatInterval: number = 20;
   private lastPromptTime: number = 0;
   private activePromptIdentifier: string | null = null;
+  private hasInitialCheckRun: boolean = false;
 
   constructor(configuration: Configuration, monitor: SystemMonitor) {
     this.configuration = configuration;
     this.monitor = monitor;
+  }
+
+  setDecisionEngine(engine: DecisionEngine): void {
+    this.decisionEngine = engine;
   }
 
   getCurrentConfiguration(): Configuration {
@@ -40,9 +47,14 @@ export class WorkspaceMonitor {
 
     console.log('Active window:', activeWindow.processName, '| Title:', activeWindow.windowTitle);
 
-    if (activeWindow.processName === this.lastWindow?.processName &&
+    if (this.hasInitialCheckRun &&
+        activeWindow.processName === this.lastWindow?.processName &&
         activeWindow.windowTitle === this.lastWindow?.windowTitle) {
       return false;
+    }
+
+    if (!this.hasInitialCheckRun) {
+      this.hasInitialCheckRun = true;
     }
 
     this.lastWindow = activeWindow;
@@ -52,6 +64,11 @@ export class WorkspaceMonitor {
     console.log('Is distracting?', isDistracting);
 
     if (isDistracting) {
+      if (this.decisionEngine?.hasActiveAccess(activeWindow)) {
+        console.log('Access already granted for', activeWindow.processName);
+        return false;
+      }
+
       const timeSinceLastPrompt = now - this.lastPromptTime;
       if (timeSinceLastPrompt > this.promptRepeatInterval || this.lastPromptTime === 0) {
         this.lastPromptTime = now;
@@ -116,9 +133,16 @@ export class WorkspaceMonitor {
 
   startMonitoring(intervalMs: number = 1000): void {
     console.log('Workspace monitoring started');
+    this.checkWorkspace().catch(err => {
+      console.error('Initial workspace check failed:', err);
+    });
     setInterval(async () => {
-      const result = await this.checkWorkspace();
-      console.log('Workspace check completed, distraction:', result);
+      try {
+        const result = await this.checkWorkspace();
+        console.log('Workspace check completed, distraction:', result);
+      } catch (err) {
+        console.error('Workspace check failed:', err);
+      }
     }, intervalMs);
   }
 }

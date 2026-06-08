@@ -20,12 +20,25 @@ log "🔧  Changing to Electron project directory..."
 cd "$ELECTRON_DIR"
 
 log "📦  Installing npm dependencies..."
-npm install
+npm install --ignore-scripts 2>/dev/null || true
+
+if [[ ! -f "node_modules/electron/dist/Electron.app/Contents/MacOS/Electron" && ! -f "node_modules/electron/dist/electron" ]]; then
+  log "⬇️  Downloading Electron binary..."
+  ELECTRON_VER=$(node -e "console.log(require('./node_modules/electron/package.json').version)")
+  ARCH=$(node -e "console.log(process.arch)")
+  PLATFORM=$(node -e "console.log(process.platform)")
+  if [[ "$PLATFORM" == "darwin" ]]; then
+    curl -L -o /tmp/electron-temp.zip "https://github.com/electron/electron/releases/download/v${ELECTRON_VER}/electron-v${ELECTRON_VER}-${PLATFORM}-${ARCH}.zip"
+    mkdir -p node_modules/electron/dist
+    unzip -oq /tmp/electron-temp.zip -d node_modules/electron/dist/
+    printf 'Electron.app/Contents/MacOS/Electron' > node_modules/electron/path.txt
+    rm -f /tmp/electron-temp.zip
+    log "✅  Electron binary installed"
+  fi
+fi
 
 log "🏗️  Building the project..."
 npm run build
 
 log "🚀  Launching MindGate..."
 npx electron .
-
-log "✅  MindGate started successfully."
