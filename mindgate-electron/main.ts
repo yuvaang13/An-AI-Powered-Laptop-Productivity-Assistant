@@ -29,9 +29,11 @@ async function checkAccessibilityPermissions(): Promise<boolean> {
 
 async function requestAccessibilityPermissions(): Promise<void> {
   if (process.platform !== 'darwin') return;
-  // Calling with prompt=true shows the system accessibility permission dialog
   systemPreferences.isTrustedAccessibilityClient(true);
-  if (!systemPreferences.isTrustedAccessibilityClient(false)) {
+  if (systemPreferences.isTrustedAccessibilityClient(false)) {
+    systemMonitor.setPermissionsGranted();
+    tray?.setToolTip('MindGate Productivity Assistant');
+  } else {
     tray?.setToolTip('MindGate - Grant Accessibility permission in System Settings > Privacy & Security > Accessibility');
   }
 }
@@ -64,6 +66,14 @@ async function initialize() {
 
    const hasPermission = await checkAccessibilityPermissions();
    if (!hasPermission && orbWindow) {
+     const config = configurationService.getConfiguration();
+     orbWindow.setSize(config.theme.dimensions.orbExpandedWidth, config.theme.dimensions.orbExpandedHeight);
+     const primaryDisplay = screen.getPrimaryDisplay();
+     const { bounds } = primaryDisplay;
+     orbWindow.setPosition(
+       Math.round(bounds.x + bounds.width - config.theme.dimensions.orbExpandedWidth - config.theme.dimensions.orbXOffset),
+       Math.round(bounds.y + config.theme.dimensions.orbYOffset + 100)
+     );
      orbWindow.show();
    }
  }

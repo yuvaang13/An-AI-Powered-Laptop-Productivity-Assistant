@@ -5,6 +5,7 @@ export interface PlatformMonitor {
   getActiveBrowserURL?(identifier: string): Promise<string | null>;
   closeBrowserTab?(identifier: string): Promise<boolean>;
   hideApplication?(processName: string): Promise<boolean>;
+  setPermissionsGranted?(): void;
 }
 
 export class SystemMonitor {
@@ -49,5 +50,9 @@ export class SystemMonitor {
       await this.initialize();
     }
     return this.platformMonitor?.hideApplication?.(processName) ?? false;
+  }
+
+  setPermissionsGranted(): void {
+    this.platformMonitor?.setPermissionsGranted?.();
   }
 }

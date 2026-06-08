@@ -5,9 +5,18 @@ import { ActiveWindowInfo } from '../../types.js';
 const execAsync = promisify(exec);
 
 export class MacMonitor {
+  private hasPermission: boolean = true;
+
+  setPermissionsGranted(): void {
+    this.hasPermission = true;
+  }
+
   async getActiveWindow(): Promise<ActiveWindowInfo | null> {
+    if (!this.hasPermission) {
+      return null;
+    }
+
     try {
-      console.log('Getting active window via AppleScript');
       const script = `
 tell application "System Events"
   set frontApp to name of first application process whose frontmost is true
@@ -50,8 +59,8 @@ end tell
             height: frameParts[3] || 0
           };
         }
-      } catch (e) {
-        console.error('Failed to get window frame:', e);
+      } catch {
+        // Frame is optional — proceed without it
       }
 
       return {
@@ -61,7 +70,13 @@ end tell
         frame
       };
     } catch (error) {
-      console.error('Failed to get active window on macOS:', error);
+      const msg = String(error);
+      if (msg.includes('-1743')) {
+        this.hasPermission = false;
+        console.log('Accessibility permission denied — AppleScript calls disabled. Grant permission via the in-app banner.');
+      } else {
+        console.error('Failed to get active window:', msg.slice(0, 200));
+      }
       return null;
     }
   }
