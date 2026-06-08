@@ -122,10 +122,18 @@ export class WorkspaceMonitor {
 
   private hasRestrictedContent(window: ActiveWindowInfo): boolean {
     const windowTitle = window.windowTitle.toLowerCase();
+    const browserURL = window.browserURL?.toLowerCase() || '';
 
-    return this.configuration.settings.restrictedKeywords.some(kw =>
-      windowTitle.includes(kw.toLowerCase()) || kw.toLowerCase().includes(windowTitle)
-    );
+    return this.configuration.settings.restrictedKeywords.some(kw => {
+      const keyword = kw.toLowerCase();
+      if (windowTitle.includes(keyword)) return true;
+      if (browserURL.includes(keyword)) return true;
+      try {
+        const hostname = new URL(browserURL).hostname;
+        if (hostname.includes(keyword)) return true;
+      } catch {}
+      return false;
+    });
   }
 
   onDistractionDetected?: (window: ActiveWindowInfo) => void;

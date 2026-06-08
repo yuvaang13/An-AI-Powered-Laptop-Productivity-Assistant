@@ -58,6 +58,7 @@ export interface ActiveWindowInfo {
   windowTitle: string;
   bundleID?: string;
   exeName?: string;
+  browserURL?: string;
   frame: {
     x: number;
     y: number;

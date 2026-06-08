@@ -63,10 +63,13 @@ end tell
         // Frame is optional — proceed without it
       }
 
+      const browserURL = bundleID ? (await this.getActiveBrowserURL(bundleID)) ?? undefined : undefined;
+
       return {
         processName,
         windowTitle,
         bundleID,
+        browserURL,
         frame
       };
     } catch (error) {
