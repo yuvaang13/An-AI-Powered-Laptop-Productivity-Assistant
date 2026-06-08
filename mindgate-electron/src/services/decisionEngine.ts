@@ -1,5 +1,5 @@
-import { OllamaService } from './ollamaService';
-import { ActiveWindowInfo, DecisionResult, Configuration } from '../types';
+import { OllamaService } from './ollamaService.js';
+import { ActiveWindowInfo, DecisionResult, Configuration } from '../types.js';
 
 export class DecisionEngine {
   private ollamaService: OllamaService;

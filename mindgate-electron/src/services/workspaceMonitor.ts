@@ -1,5 +1,5 @@
-import type { ActiveWindowInfo, Configuration } from '../types';
-import type { SystemMonitor } from './platformWrapper';
+import type { ActiveWindowInfo, Configuration } from '../types.js';
+import type { SystemMonitor } from './platformWrapper.js';
 
 export class WorkspaceMonitor {
   private monitor: SystemMonitor;

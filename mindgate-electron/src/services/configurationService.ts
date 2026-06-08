@@ -1,4 +1,4 @@
-import { Configuration, AppSettings } from '../types';
+import { Configuration, AppSettings } from '../types.js';
 import { app } from 'electron';
 import { join } from 'path';
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';

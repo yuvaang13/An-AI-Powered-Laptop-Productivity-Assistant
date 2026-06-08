@@ -1,6 +1,6 @@
 import { BrowserWindow, screen } from 'electron';
-import type { Configuration, ActiveWindowInfo } from '../types';
-import { SystemMonitor } from './platformWrapper';
+import type { Configuration, ActiveWindowInfo } from '../types.js';
+import { SystemMonitor } from './platformWrapper.js';
 
 export class WindowManager {
   private orbWindow: BrowserWindow | null = null;

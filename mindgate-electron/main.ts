@@ -1,11 +1,11 @@
 import { app, BrowserWindow, ipcMain, Tray, screen, Menu, nativeImage, shell } from 'electron';
 import { join } from 'path';
-import { ConfigurationService } from './src/services/configurationService';
-import { DecisionEngine } from './src/services/decisionEngine';
-import { WorkspaceMonitor } from './src/services/workspaceMonitor';
-import { WindowManager } from './src/services/windowManager';
-import { SystemMonitor } from './src/services/platformWrapper';
-import type { ActiveWindowInfo, Configuration } from './src/types';
+import { ConfigurationService } from './src/services/configurationService.js';
+import { DecisionEngine } from './src/services/decisionEngine.js';
+import { WorkspaceMonitor } from './src/services/workspaceMonitor.js';
+import { WindowManager } from './src/services/windowManager.js';
+import { SystemMonitor } from './src/services/platformWrapper.js';
+import type { ActiveWindowInfo, Configuration } from './src/types.js';
 
 let configurationService: ConfigurationService;
 let decisionEngine: DecisionEngine;

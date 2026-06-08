@@ -1,4 +1,4 @@
-import type { ActiveWindowInfo } from '../types';
+import type { ActiveWindowInfo } from '../types.js';
 
 export interface PlatformMonitor {
   getActiveWindow(): Promise<ActiveWindowInfo | null>;

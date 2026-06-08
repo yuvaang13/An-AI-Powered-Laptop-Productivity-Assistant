@@ -1,6 +1,6 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import { ActiveWindowInfo } from '../../types';
+import { ActiveWindowInfo } from '../../types.js';
 
 const execAsync = promisify(exec);
 

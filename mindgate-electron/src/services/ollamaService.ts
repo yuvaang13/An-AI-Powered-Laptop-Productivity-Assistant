@@ -1,4 +1,4 @@
-import { DecisionResult } from '../types';
+import { DecisionResult } from '../types.js';
 
 export class OllamaService {
   private baseURL: string;

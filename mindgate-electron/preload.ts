@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { Configuration } from './src/types';
+import type { Configuration } from './src/types.js';
 
 contextBridge.exposeInMainWorld('mindgateAPI', {
   checkOllamaConnection: () => ipcRenderer.invoke('check-ollama-connection'),

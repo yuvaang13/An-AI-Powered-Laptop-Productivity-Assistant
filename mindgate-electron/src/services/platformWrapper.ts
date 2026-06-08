@@ -1,4 +1,4 @@
-import type { ActiveWindowInfo } from '../types';
+import type { ActiveWindowInfo } from '../types.js';
 
 export interface PlatformMonitor {
   getActiveWindow(): Promise<ActiveWindowInfo | null>;
@@ -12,13 +12,13 @@ export class SystemMonitor {
 
   async initialize() {
     if (process.platform === 'win32') {
-      const { WindowsMonitor } = await import('../platform/windows/monitor');
+      const { WindowsMonitor } = await import('../platform/windows/monitor.js');
       this.platformMonitor = new WindowsMonitor();
     } else if (process.platform === 'darwin') {
-      const { MacMonitor } = await import('../platform/mac/monitor');
+      const { MacMonitor } = await import('../platform/mac/monitor.js');
       this.platformMonitor = new MacMonitor();
     } else {
-      const { LinuxMonitor } = await import('../platform/linux/monitor');
+      const { LinuxMonitor } = await import('../platform/linux/monitor.js');
       this.platformMonitor = new LinuxMonitor();
     }
   }
