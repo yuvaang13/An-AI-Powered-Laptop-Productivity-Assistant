@@ -2,7 +2,8 @@
   "name": "mindgate-electron",
   "version": "1.0.0",
   "description": "Cross-platform MindGate productivity app",
-  "main": "main.ts",
+  "main": "main.js",
+  "type": "module",
   "scripts": {
     "dev": "concurrently \"npm run dev:renderer\" \"npm run dev:main\"",
     "dev:main": "wait-on http://localhost:3000 && electron .",
