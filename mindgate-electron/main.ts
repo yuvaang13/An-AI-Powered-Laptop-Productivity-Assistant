@@ -19,7 +19,7 @@ let tray: Tray | null = null;
 let overlayWindow: BrowserWindow | null = null;
 
 let isOllamaConnected: boolean = false;
-let hasRequestedPermissions: boolean = false;
+let hasRequestedPermissions: boolean = true;
 
 async function checkAccessibilityPermissions(): Promise<boolean> {
   if (process.platform !== 'darwin') return true;
@@ -282,17 +282,27 @@ function setupEventHandlers() {
   workspaceMonitor.startMonitoring();
 }
 
+function createTrayIcon(): Electron.NativeImage {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44">
+  <circle cx="22" cy="17" r="11" stroke="white" stroke-width="1.2" fill="none"/>
+  <path d="M15 14 Q18.5 11 22 14 Q25.5 11 29 14" stroke="white" stroke-width="0.8" fill="none" opacity="0.85"/>
+  <path d="M15 16.5 Q18.5 13.5 22 16.5 Q25.5 13.5 29 16.5" stroke="white" stroke-width="0.8" fill="none" opacity="0.85"/>
+  <path d="M15 19 Q18.5 16 22 19 Q25.5 16 29 19" stroke="white" stroke-width="0.8" fill="none" opacity="0.85"/>
+  <path d="M17.5 12 Q19.5 9.5 22 12 Q24.5 9.5 26.5 12" stroke="white" stroke-width="0.6" fill="none" opacity="0.55"/>
+  <ellipse cx="18" cy="13" rx="3.5" ry="2.5" fill="white" opacity="0.12"/>
+  <path d="M10.5 28 Q22 32 33.5 28" stroke="white" stroke-width="1" fill="none"/>
+</svg>`;
+  const dataUrl = `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
+  const img = nativeImage.createFromDataURL(dataUrl);
+  if (process.platform === 'darwin') {
+    img.setTemplateImage(true);
+  }
+  return img;
+}
+
 function createTray() {
   try {
-    const iconName = process.platform === 'win32' ? 'tray-icon-mac.png' : 'tray-icon-mac.png';
-    const iconPath = join(app.getAppPath(), 'assets', iconName);
-
-    let trayIcon: Electron.NativeImage;
-    try {
-      trayIcon = nativeImage.createFromPath(iconPath);
-    } catch {
-      trayIcon = nativeImage.createFromBuffer(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64'));
-    }
+    const trayIcon = createTrayIcon();
 
     tray = new Tray(trayIcon);
     tray.setToolTip('MindGate Productivity Assistant');
