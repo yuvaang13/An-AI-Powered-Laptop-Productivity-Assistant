@@ -264,7 +264,7 @@ function setupEventHandlers() {
 
 function createTray() {
   try {
-    const iconName = process.platform === 'win32' ? 'tray-icon-windows.png' : 'tray-icon-mac.png';
+    const iconName = process.platform === 'win32' ? 'tray-icon-mac.png' : 'tray-icon-mac.png';
     const iconPath = join(app.getAppPath(), 'assets', iconName);
 
     let trayIcon: Electron.NativeImage;
