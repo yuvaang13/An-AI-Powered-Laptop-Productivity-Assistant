@@ -13,75 +13,103 @@ export class MacMonitor {
 
   async getActiveWindow(): Promise<ActiveWindowInfo | null> {
     if (!this.hasPermission) {
+      console.log('[MacMonitor] No permission — returning null');
       return null;
     }
 
+    // Each piece is fetched independently so a failure in one doesn't
+    // break the whole detection.
+
+    // ── 1. Frontmost app name ──
+    let processName = 'unknown';
     try {
-      const script = `
-tell application "System Events"
+      const appScript = `tell application "System Events"
   set frontApp to name of first application process whose frontmost is true
-end tell
-tell application frontApp
-  if (count of windows) > 0 then
-    set windowTitle to name of front window
-  else
-    set windowTitle to ""
-  end if
-end tell
-tell application "System Events"
-  set frontAppPath to (path to frontmost application)
-  set appBundleID to bundle identifier of (info for frontAppPath)
-end tell
-`;
-      const { stdout } = await execAsync(`osascript -e '${script}'`, { timeout: 5000 });
-
-      const lines = stdout.trim().split('\n');
-      const processName = lines[0] || 'unknown';
-      const windowTitle = lines[1] || '';
-      const bundleID = lines[2] || '';
-
-      const frameScript = `
-tell application "System Events"
-  set frontApp to first application process whose frontmost is true
-  set frontWindow to value of attribute "AXFrame" of front window of frontApp
-end tell
-`;
-      let frame = { x: 0, y: 0, width: 0, height: 0 };
-      try {
-        const frameResult = await execAsync(`osascript -e '${frameScript}'`, { timeout: 5000 });
-        const frameParts = frameResult.stdout.trim().split(',').map(p => parseFloat(p.trim()));
-        if (frameParts.length >= 4) {
-          const mainScreenHeight = await this.getMainScreenHeight();
-          frame = {
-            x: frameParts[0] || 0,
-            y: mainScreenHeight - (frameParts[1] || 0) - (frameParts[3] || 0),
-            width: frameParts[2] || 0,
-            height: frameParts[3] || 0
-          };
-        }
-      } catch {
-        // Frame is optional — proceed without it
-      }
-
-      const browserURL = bundleID ? (await this.getActiveBrowserURL(bundleID)) ?? undefined : undefined;
-
-      return {
-        processName,
-        windowTitle,
-        bundleID,
-        browserURL,
-        frame
-      };
-    } catch (error) {
-      const msg = String(error);
-      if (msg.includes('-1743')) {
-        this.hasPermission = false;
-        console.log('Accessibility permission denied — AppleScript calls disabled. Grant permission via the in-app banner.');
-      } else {
-        console.error('Failed to get active window:', msg.slice(0, 200));
-      }
+  return frontApp
+end tell`;
+      const { stdout } = await execAsync(`osascript -e '${appScript}'`, { timeout: 5000 });
+      processName = stdout.trim() || 'unknown';
+    } catch {
+      // App name is essential — if this fails, we can't detect anything
+      console.error('[MacMonitor] Failed to get frontmost app name');
       return null;
     }
+
+    // ── 2. Window title (via Accessibility API — AXTitle) ──
+    let windowTitle = '';
+    try {
+      const titleScript = `tell application "System Events"
+  set frontApp to first application process whose frontmost is true
+  try
+    set frontWindow to value of attribute "AXTitle" of front window of frontApp
+    return frontWindow
+  on error
+    return ""
+  end try
+end tell`;
+      const { stdout } = await execAsync(`osascript -e '${titleScript}'`, { timeout: 5000 });
+      windowTitle = stdout.trim() || '';
+    } catch {
+      // Title is optional
+    }
+
+    // ── 3. Bundle ID ──
+    let bundleID = '';
+    try {
+      const bundleScript = `tell application "System Events"
+  try
+    set frontAppPath to path to frontmost application as text
+    set appInfo to info for frontAppPath
+    return bundle identifier of appInfo
+  on error
+    return ""
+  end try
+end tell`;
+      const { stdout } = await execAsync(`osascript -e '${bundleScript}'`, { timeout: 5000 });
+      bundleID = stdout.trim() || '';
+    } catch {
+      // Bundle ID is optional
+    }
+
+    // ── 4. Window frame (optional) ──
+    let frame = { x: 0, y: 0, width: 0, height: 0 };
+    try {
+      const frameScript = `tell application "System Events"
+  set frontApp to first application process whose frontmost is true
+  try
+    set frontWindow to value of attribute "AXFrame" of front window of frontApp
+    return frontWindow
+  on error
+    return "0,0,0,0"
+  end try
+end tell`;
+      const frameResult = await execAsync(`osascript -e '${frameScript}'`, { timeout: 5000 });
+      const frameParts = frameResult.stdout.trim().split(',').map(p => parseFloat(p.trim()));
+      if (frameParts.length >= 4) {
+        const mainScreenHeight = await this.getMainScreenHeight();
+        frame = {
+          x: frameParts[0] || 0,
+          y: mainScreenHeight - (frameParts[1] || 0) - (frameParts[3] || 0),
+          width: frameParts[2] || 0,
+          height: frameParts[3] || 0
+        };
+      }
+    } catch {
+      // Frame is optional
+    }
+
+    // ── 5. Browser URL ──
+    const browserURL = bundleID ? (await this.getActiveBrowserURL(bundleID)) ?? undefined : undefined;
+
+    console.log(`[MacMonitor] Window: "${processName}" | Title: "${windowTitle}" | BundleID: "${bundleID}" | URL: "${browserURL || ''}"`);
+
+    return {
+      processName,
+      windowTitle,
+      bundleID,
+      browserURL,
+      frame
+    };
   }
 
   async getActiveBrowserURL(bundleID: string): Promise<string | null> {
@@ -115,7 +143,7 @@ end tell`;
       const { stdout } = await execAsync(`osascript -e '${script}'`, { timeout: 3000 });
       const result = stdout.trim();
       console.log(`[MacMonitor] URL fetch result: "${result}"`);
-      
+
       return result || null;
     } catch (error) {
       console.error('[MacMonitor] Failed to get browser URL:', error);

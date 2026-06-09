@@ -7,7 +7,6 @@ export class WorkspaceMonitor {
   private configuration: Configuration;
   private decisionEngine: DecisionEngine | null = null;
   private lastCheckTime: number = 0;
-  private lastWindow: ActiveWindowInfo | null = null;
   private debounceInterval: number = 0.75;
   private promptRepeatInterval: number = 20;
   private lastPromptTime: number = 0;
@@ -47,17 +46,10 @@ export class WorkspaceMonitor {
 
     console.log('Active window:', activeWindow.processName, '| Title:', activeWindow.windowTitle, '| BundleID:', activeWindow.bundleID, '| URL:', activeWindow.browserURL);
 
-    if (this.hasInitialCheckRun &&
-        activeWindow.processName === this.lastWindow?.processName &&
-        activeWindow.windowTitle === this.lastWindow?.windowTitle) {
-      return false;
-    }
-
     if (!this.hasInitialCheckRun) {
       this.hasInitialCheckRun = true;
     }
 
-    this.lastWindow = activeWindow;
     const identifier = this.getAppIdentifier(activeWindow);
 
     const isDistracting = this.isDistracting(activeWindow);
@@ -71,6 +63,7 @@ export class WorkspaceMonitor {
 
       const timeSinceLastPrompt = now - this.lastPromptTime;
       if (timeSinceLastPrompt > this.promptRepeatInterval || this.lastPromptTime === 0) {
+        console.log('Distraction detected — firing prompt for', activeWindow.processName);
         this.lastPromptTime = now;
         this.activePromptIdentifier = identifier;
         this.onDistractionDetected?.(activeWindow);
@@ -100,10 +93,12 @@ export class WorkspaceMonitor {
     if (this.configuration.settings.distractingApps.some(app =>
       processName.includes(app.toLowerCase()) || bundleID.includes(app.toLowerCase()) || exeName.includes(app.toLowerCase())
     )) {
+      console.log(`[Distraction] App matched: "${processName}" in distracting apps`);
       return true;
     }
 
     if (this.isBrowser(window) && this.hasRestrictedContent(window)) {
+      console.log(`[Distraction] Website matched: "${processName}" has restricted content`);
       return true;
     }
 
@@ -114,25 +109,35 @@ export class WorkspaceMonitor {
     const processName = window.processName.toLowerCase();
     const exeName = window.exeName?.toLowerCase() || '';
     const bundleID = window.bundleID?.toLowerCase() || '';
-    
-    return this.configuration.settings.monitoredBrowsers.some(browser =>
-      processName.includes(browser.toLowerCase()) || exeName.includes(browser.toLowerCase()) || bundleID.includes(browser.toLowerCase())
-    );
+
+    return this.configuration.settings.monitoredBrowsers.some(browser => {
+      const needle = browser.toLowerCase();
+      return processName.includes(needle) || exeName.includes(needle) || bundleID.includes(needle);
+    });
   }
 
   private hasRestrictedContent(window: ActiveWindowInfo): boolean {
     const windowTitle = window.windowTitle.toLowerCase();
     const browserURL = window.browserURL?.toLowerCase() || '';
 
-    console.log(`[WorkspaceMonitor] Checking restricted content. Title: "${windowTitle}", URL: "${browserURL}"`);
+    console.log(`[Distraction] Checking content. Title: "${windowTitle}" URL: "${browserURL}"`);
 
     return this.configuration.settings.restrictedKeywords.some(kw => {
       const keyword = kw.toLowerCase();
-      if (windowTitle.includes(keyword)) return true;
-      if (browserURL.includes(keyword)) return true;
+      if (windowTitle.includes(keyword)) {
+        console.log(`[Distraction] Title matched keyword: "${keyword}"`);
+        return true;
+      }
+      if (browserURL.includes(keyword)) {
+        console.log(`[Distraction] URL matched keyword: "${keyword}"`);
+        return true;
+      }
       try {
         const hostname = new URL(browserURL).hostname;
-        if (hostname.includes(keyword)) return true;
+        if (hostname.includes(keyword)) {
+          console.log(`[Distraction] Hostname matched keyword: "${keyword}"`);
+          return true;
+        }
       } catch {}
       return false;
     });
@@ -149,7 +154,9 @@ export class WorkspaceMonitor {
     setInterval(async () => {
       try {
         const result = await this.checkWorkspace();
-        console.log('Workspace check completed, distraction:', result);
+        if (result) {
+          console.log('Workspace check completed, distraction detected');
+        }
       } catch (err) {
         console.error('Workspace check failed:', err);
       }
