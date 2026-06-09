@@ -134,7 +134,7 @@ export class ConfigurationService {
           'Respond to important emails'
         ],
         productiveApps: ['Terminal', 'Notes', 'Obsidian', 'Calendar'],
-        justificationCountdownDuration: 25
+        justificationCountdownDuration: 60
       },
       theme: {
         colors: {

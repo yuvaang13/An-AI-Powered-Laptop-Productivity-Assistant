@@ -61,7 +61,7 @@ async function initialize() {
   );
   workspaceMonitor.setDecisionEngine(decisionEngine);
 
-  createWindows();
+  await createWindows();
   setupIPC();
   setupEventHandlers();
   createTray();
@@ -73,7 +73,7 @@ async function initialize() {
   }
 }
 
-function createWindows() {
+async function createWindows(): Promise<void> {
   const primaryDisplay = screen.getPrimaryDisplay();
   const { bounds } = primaryDisplay;
   const config = configurationService.getConfiguration();
@@ -104,12 +104,21 @@ function createWindows() {
 
   windowManager.setOverlayWindow(overlayWindow);
 
+  const loadPromise = new Promise<void>((resolve) => {
+    overlayWindow!.webContents.on('did-finish-load', () => {
+      console.log('Overlay window finished loading');
+      resolve();
+    });
+  });
+
   console.log('Loading overlay window with VITE_DEV_SERVER_URL:', process.env.VITE_DEV_SERVER_URL);
   if (process.env.VITE_DEV_SERVER_URL) {
     overlayWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
   } else {
     overlayWindow.loadFile(join(__dirname, 'dist/index.html'));
   }
+
+  await loadPromise;
 }
 
 function setupIPC() {
