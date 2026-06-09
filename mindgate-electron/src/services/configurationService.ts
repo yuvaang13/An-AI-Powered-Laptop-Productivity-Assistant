@@ -51,27 +51,82 @@ export class ConfigurationService {
     return {
       settings: {
         distractingApps: [
-          'Discord', 'Slack', 'Twitter', 'Telegram', 'Reddit', 'TikTok',
-          'Instagram', 'Facebook', 'Netflix', 'YouTube', 'Twitch'
+          'Discord', 'Slack', 'Twitter', 'TweetDeck', 'Telegram', 'Reddit',
+          'TikTok', 'Instagram', 'Threads', 'Facebook', 'Messenger',
+          'Netflix', 'YouTube', 'Twitch', 'Hulu', 'Disney+', 'HBOMax',
+          'Spotify', 'Pandora', 'SoundCloud',
+          'Snapchat', 'Pinterest', 'LinkedIn', 'Tumblr',
+          'WhatsApp', 'WeChat', 'Signal', 'GroupMe', 'Kik',
+          'Tinder', 'Bumble', 'Hinge', 'Grindr',
+          'Steam', 'Epic Games', 'Battle.net', 'Roblox', 'Minecraft',
+          'Discord', 'Twitch',
+          'Amazon', 'eBay', 'Etsy', 'Walmart', 'Target', 'Best Buy',
+          'AliExpress', 'Temu', 'Shein', 'Wish',
+          'Photos', 'iPhoto', 'Photo Booth',
         ],
         restrictedKeywords: [
+          // Social Media
+          'facebook', 'fb.com', 'fb.watch', 'messenger',
+          'twitter', 'x.com', 'tweetdeck', 'tweet',
+          'instagram', 'threads.net',
+          'tiktok',
+          'snapchat',
+          'pinterest',
+          'linkedin',
+          'tumblr',
+          'tinder', 'bumble', 'hinge', 'okcupid', 'grindr', 'badoo',
+
+          // Video & Streaming
           'youtube', 'youtu.be', 'youtube-nocookie',
-          'twitter', 'x.com',
-          'facebook', 'fb.com', 'fb.watch', 'instagram',
-          'tiktok', 'reddit',
-          'twitch', 'netflix', 'spotify', 'discord',
-          'linkedin', 'pinterest', 'snapchat',
-          'whatsapp', 'telegram', 't.me',
-          'medium', 'buzzfeed', 'hackernews', 'news.ycombinator.com', 'producthunt',
-          'dribbble', 'behance', 'imgur', 'giphy', '9gag',
-          'memes', 'gaming', 'espn', 'bleacherreport',
-          'cnn', 'foxnews', 'msnbc', 'bbc', 'bbc.co.uk',
-          'news', 'weather.com', 'stocks', 'finance.yahoo.com',
-          'crypto.com', 'coinbase', 'binance', 'crypto', 'bitcoin', 'trading',
-          'shopping', 'amazon.com', 'amazon.co.uk', 'ebay', 'etsy',
-          'walmart', 'target.com',
-          'fashion', 'celebrity', 'gossip', 'entertainment',
-          'movies', 'tv shows', 'streaming', 'video', 'viral', 'trending'
+          'netflix', 'hulu', 'disney+', 'hbomax', 'max', 'peacock', 'paramount+',
+          'crunchyroll', 'funimation', 'bilibili',
+          'streaming', 'watch movie', 'watch anime',
+
+          // Live Streaming
+          'twitch', 'kick.com',
+
+          // Forums
+          'reddit',
+          '4chan', '8kun',
+          'fandom',
+
+          // Memes & Image Sharing
+          'imgur', 'giphy', '9gag', 'tenor',
+          'memes', 'knowyourmeme',
+          'deviantart',
+
+          // Shopping
+          'amazon', 'ebay', 'etsy', 'walmart', 'target', 'bestbuy',
+          'aliexpress', 'temu', 'shein', 'wish',
+          'nike', 'adidas', 'zara', 'hm', 'sephora', 'ulta',
+
+          // Music
+          'spotify', 'pandora', 'soundcloud', 'deezer', 'tidal',
+
+          // Gaming
+          'steam', 'epic games', 'roblox',
+          'chess.com', 'lichess',
+          'playstation', 'xbox', 'nintendo',
+          'minecraft', 'fortnite', 'valorant', 'league of legends',
+
+          // Adult
+          'pornhub', 'xvideos', 'xhamster', 'xnxx', 'redtube', 'onlyfans',
+          'chaturbate', 'stripchat',
+          'nsfw', 'adult',
+
+          // Pirated Content
+          'thepiratebay', '1337x', 'rutracker',
+          'kissanime', 'gogoanime', 'fmovies', 'soap2day',
+
+          // Gambling
+          'draftkings', 'fanduel', 'bet365', 'pokerstars',
+          'casino', 'poker',
+
+          // Entertainment / Gossip / General Traps
+          'buzzfeed', 'tmz', 'eonline', 'people', 'pagesix',
+          'dailymail', 'thesun', 'mirror',
+          'gaming', 'entertainment', 'celebrity', 'gossip',
+          'viral', 'trending',
         ],
         monitoredBrowsers: ['Safari', 'Google Chrome', 'Microsoft Edge', 'Firefox', 'Brave'],
         ollamaURL: 'http://localhost:11434/api/generate',

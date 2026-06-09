@@ -3,82 +3,271 @@ import type { DecisionEngine } from './decisionEngine.js';
 import type { SystemMonitor } from './platformWrapper.js';
 
 const DISTRACTING_DOMAINS: string[] = [
-  'youtube.com', 'youtu.be', 'youtube-nocookie.com',
-  'reddit.com',
-  'twitter.com', 'x.com',
+  // ── Social Media & Microblogging ──
+  'facebook.com', 'fb.com', 'fb.watch', 'messenger.com',
+  'twitter.com', 'x.com', 'tweetdeck.com',
+  'instagram.com', 'threads.net',
   'tiktok.com',
-  'instagram.com',
-  'twitch.tv',
-  'discord.com',
-  'netflix.com',
-  'facebook.com',
-  'fb.com',
-  'spotify.com',
+  'snapchat.com', 'snap.com',
+  'pinterest.com', 'pinterest.ca', 'pinterest.co.uk',
   'linkedin.com',
-  'pinterest.com',
-  'pinterest.ca',
-  'snapchat.com',
-  'whatsapp.com',
-  'telegram.org',
-  't.me',
-  'medium.com',
-  'buzzfeed.com',
-  'hackernews.com', 'news.ycombinator.com',
-  'producthunt.com',
-  'dribbble.com',
-  'behance.net',
+  'tumblr.com',
+  'flickr.com',
+  'vk.com', 'vkontakte.ru',
+  'weibo.com',
+  'qq.com',
+  'reddit.com', 'redd.it',
+
+  // ── Video & Streaming ──
+  'youtube.com', 'youtu.be', 'youtube-nocookie.com',
+  'netflix.com',
+  'hulu.com',
+  'twitch.tv',
+  'disneyplus.com', 'disneyplus.com',
+  'hbomax.com', 'max.com',
+  'peacocktv.com',
+  'paramountplus.com',
+  'primevideo.com', 'amazon.com/video',
+  'appletv.com',
+  'crunchyroll.com',
+  'funimation.com',
+  'vimeo.com',
+  'dailymotion.com',
+  'bilibili.com',
+  'nicovideo.jp',
+
+  // ── Forums & Communities ──
+  '4chan.org', '4channel.org',
+  '8kun.top',
+  'fandom.com', 'wikia.com',
+  'forum.',  // catches ubuntuforums, etc.
+
+  // ── Imageboards & Memes ──
   'imgur.com',
   'giphy.com',
   '9gag.com',
-  'espn.com',
-  'bleacherreport.com',
-  'cnn.com',
-  'foxnews.com',
-  'msnbc.com',
-  'bbc.com', 'bbc.co.uk',
-  'amazon.com', 'amazon.co.uk', 'amazon.ca', 'amazon.de', 'amazon.fr',
-  'ebay.com', 'ebay.co.uk',
+  'cheezburger.com',
+  'memegenerator.net',
+  'knowyourmeme.com',
+  'tenor.com',
+  'deviantart.com',
+
+  // ── Adult Content ──
+  'pornhub.com', 'xvideos.com', 'xhamster.com',
+  'xnxx.com', 'redtube.com', 'youporn.com',
+  'tube8.com', 'spankbang.com', 'porntrex.com',
+  'motherless.com', 'efukt.com',
+  'onlyfans.com', 'fansly.com',
+  'stripchat.com', 'chaturbate.com',
+  'livesex.com', 'camsoda.com',
+  'manyvids.com', 'clips4sale.com',
+
+  // ── Shopping (Consumer) ──
+  'amazon.com', 'amazon.co.uk', 'amazon.ca', 'amazon.de', 'amazon.fr', 'amazon.it', 'amazon.es',
+  'ebay.com', 'ebay.co.uk', 'ebay.ca', 'ebay.de', 'ebay.fr',
   'etsy.com',
   'walmart.com',
   'target.com',
-  'weather.com',
-  'crypto.com', 'coinbase.com', 'binance.com',
-  'reddit.com',
-  'fandom.com',
-  'pornhub.com', 'xvideos.com', 'xhamster.com',
+  'bestbuy.com',
+  'homedepot.com',
+  'lowes.com',
+  'aliexpress.com', 'alibaba.com',
+  'shopify.com',  // catches stores hosted on shopify
+  'wish.com',
+  'temu.com',
+  'shein.com', 'shein.com',
+  'zara.com',
+  'hm.com',
+  'nike.com',
+  'adidas.com',
+  'gap.com',
+  'oldnavy.com',
+  'macys.com',
+  'nordstrom.com',
+  'kohls.com',
+  'sephora.com',
+  'ulta.com',
+
+  // ── Dating & Social Discovery ──
+  'tinder.com',
+  'bumble.com',
+  'hinge.co',
+  'okcupid.com',
+  'match.com',
+  'eharmony.com',
+  'plentyoffish.com',
+  'grindr.com',
+  'badoo.com',
+
+  // ── Messaging & Group Chats ──
+  'discord.com', 'discord.gg',
+  'telegram.org', 't.me',
+  'whatsapp.com',
+  'signal.org',
+  'wechat.com',
+  'line.me',
+  'kik.com',
+  'groupme.com',
+  'slack.com',  // work-related but can be distracting
+
+  // ── Entertainment & Gossip ──
+  'buzzfeed.com',
+  'tmz.com',
+  'eonline.com',
+  'people.com',
+  'pagesix.com',
+  'dailymail.co.uk',
+  'thesun.co.uk',
+  'mirror.co.uk',
+  'deadline.com',
+  'variety.com',
+  'hollywoodreporter.com',
+  'buzzfeednews.com',
+
+  // ── Gaming ──
+  'steampowered.com', 'steamcommunity.com',
+  'epicgames.com',
+  'roblox.com',
+  'twitch.tv',
+  'kick.com',
+  'chess.com',
+  'lichess.org',
+  'pokemon.com',
+  'nintendo.com',
+  'playstation.com',
+  'xbox.com',
+  'battle.net', 'blizzard.com',
+  'origin.com', 'ea.com',
+  'ubisoft.com',
+  'rockstargames.com',
+  'minecraft.net',
+  'valorant.com',
+  'leagueoflegends.com',
+  'dota2.com',
+  'fortnite.com',
+  'amongus.com',
+
+  // ── Music Streaming ──
+  'spotify.com',
+  'pandora.com',
+  'soundcloud.com',
+  'deezer.com',
+  'tidal.com',
+  'apple.com/music',
+
+  // ── News & Aggregators (Entertainment-focused) ──
+  'buzzfeed.com',
+  'upworthy.com',
+  'distractify.com',
+  'thechive.com',
+  'cracked.com',
+  'collegehumor.com',
+
+  // ── Pirated / Streaming Sites ──
+  'thepiratebay.org',
+  '1337x.to',
+  'rutracker.org',
+  'nyaa.si',
+  'kissanime.com', 'kissmanga.com',
+  'gogoanime.com',
+  'zoro.to',
+  'fmovies.to', 'fmovies.co',
+  'soap2day.com', 'soap2day.to',
+  'putlocker.com', 'putlocker.to',
+  'solarmovie.com',
+  'projectfreetv.com',
+  'watchseries.com',
+
+  // ── Gambling & Betting ──
+  'draftkings.com',
+  'fanduel.com',
+  'bet365.com',
+  'pokerstars.com',
+  'bovada.lv',
+  '888casino.com',
+  'partypoker.com',
+
+  // ── Crypto / NFT / Meme Stocks ──
+  'opensea.io',
+  'rarible.com',
+  'niftygateway.com',
+  'loot.exchange',
+  'pancakeswap.finance',
+  'uniswap.org',
 ];
 
 const TITLE_DISTRACTION_PATTERNS: RegExp[] = [
-  /youtube|youtu\.be|watch\?v=/i,
-  /reddit|r\//i,
-  /twitter|x\.com|tweet/i,
+  // Social Media
+  /facebook|fb\s(messenger)?/i,
+  /twitter|x\.com|tweet|retweet/i,
+  /instagram|threads/i,
   /tiktok/i,
-  /instagram/i,
-  /twitch/i,
-  /netflix/i,
-  /facebook|fb\b/i,
-  /discord/i,
-  /spotify/i,
-  /linkedin/i,
+  /snapchat|snap\s/i,
   /pinterest/i,
-  /snapchat/i,
-  /whatsapp/i,
-  /telegram/i,
-  /medium\.com/i,
-  /buzzfeed/i,
-  /amazon|shop|buy|cart/i,
-  /ebay/i,
-  /etsy/i,
-  /walmart|target/i,
-  /news|breaking/i,
-  /crypto|bitcoin|trading/i,
-  /streaming|watch|video/i,
-  /gaming|game|play/i,
-  /memes|funny|viral|trending/i,
-  /sports|espn|nfl|nba|mlb/i,
-  /entertainment|celebrity|gossip/i,
-  /fashion|beauty/i,
-  /weather|stocks|finance/i,
+  /linkedin/i,
+  /tumblr/i,
+  /reddit|r\//i,
+
+  // Video & Streaming
+  /youtube|youtu\.be|watch\?v=/i,
+  /netflix|hulu|disney\+|hbomax|max|peacock|paramount\+/i,
+  /crunchyroll|funimation|bilibili/i,
+  /streaming|watch\s(movie|show|episode|anime)/i,
+
+  // Twitch / Live Streaming
+  /twitch|streamlabs|streamelements/i,
+
+  // Music Streaming
+  /spotify|soundcloud|pandora|deezer|tidal/i,
+
+  // Shopping
+  /amazon|ebay|etsy|walmart|target|best\s?buy/i,
+  /aliexpress|alibaba|temu|shein|shopify/i,
+  /shopping\s(cart|bag)|checkout|buy\snow/i,
+  /nike|adidas|zara|hm\b/i,
+
+  // Dating
+  /tinder|bumble|hinge|okcupid|match\.com|eharmony/i,
+  /grindr|badoo/i,
+
+  // Forums / Imageboards
+  /4chan|8kun|fandom|wikia/i,
+
+  // Memes & Image Sharing
+  /imgur|giphy|9gag|memes|tenor|cheezburger/i,
+  /deviantart|artstation/i,
+
+  // Gaming
+  /steam|epic\sgames|roblox/i,
+  /chess\.com|lichess|pokemon|nintendo/i,
+  /playstation|xbox|battle\.net|blizzard/i,
+  /minecraft|fortnite|valorant|league\sof\slegends/i,
+  /gaming|game\s(over|play|on)|esports/i,
+
+  // Entertainment / Gossip
+  /buzzfeed|tmz|e!\s|people\.com|pagesix/i,
+  /dailymail|the\ssun|mirror|deadline|variety/i,
+  /entertainment|celebrity|gossip|hollywood/i,
+
+  // Adult
+  /pornhub|xvideos|xhamster|xnxx|redtube|youporn/i,
+  /onlyfans|fansly|chaturbate|stripchat/i,
+  /adult|18\+\s/,
+  /nsfw/i,
+
+  // Pirated Content
+  /thepiratebay|1337x|rutracker/i,
+  /kissanime|gogoanime|fmovies|soap2day|putlocker/i,
+
+  // Gambling
+  /draftkings|fanduel|bet365|pokerstars|bovada/i,
+  /casino|poker|betting/i,
+
+  // General Traps
+  /trending|viral|watch\sthis/i,
+  /inbox|messaging|chat/i,
+  /discord|telegram|whatsapp|wechat|kik/i,
+  /only\sfans|fan(sly)?/i,
 ];
 
 export class WorkspaceMonitor {
