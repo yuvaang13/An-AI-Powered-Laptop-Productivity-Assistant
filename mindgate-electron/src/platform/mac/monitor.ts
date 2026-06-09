@@ -141,10 +141,13 @@ end tell`;
 
     try {
       const id = identifier.toLowerCase();
+      // Bundle IDs look like "com.google.Chrome", process names look like "Google Chrome"
+      const isBundleID = id.includes('.');
+      const tellPrefix = isBundleID ? 'application id' : 'application';
       let script: string;
 
       if (id.includes('safari')) {
-        script = `tell application id "${identifier}"
+        script = `tell ${tellPrefix} "${identifier}"
   try
     if (count of windows) is 0 then return ""
     set tabURL to URL of current tab of front window
@@ -155,7 +158,7 @@ end tell`;
   end try
 end tell`;
       } else if (id.includes('chrome') || id.includes('brave') || id.includes('edge')) {
-        script = `tell application id "${identifier}"
+        script = `tell ${tellPrefix} "${identifier}"
   try
     if (count of windows) is 0 then return ""
     set frontTab to active tab of front window
@@ -166,7 +169,7 @@ end tell`;
   end try
 end tell`;
       } else if (id.includes('firefox')) {
-        script = `tell application id "${identifier}"
+        script = `tell ${tellPrefix} "${identifier}"
   try
     if (count of windows) is 0 then return ""
     set windowTitle to name of front window
@@ -180,7 +183,7 @@ end tell`;
         return null;
       }
 
-      console.log(`[MacMonitor] Fetching URL for: ${identifier}`);
+      console.log(`[MacMonitor] Fetching URL for: ${identifier} (${tellPrefix})`);
       const { stdout } = await execAsync(`osascript -e '${script}'`, { timeout: 3000 });
       const result = stdout.trim();
       console.log(`[MacMonitor] URL fetch result: "${result}"`);
@@ -197,14 +200,16 @@ end tell`;
 
     try {
       const id = identifier.toLowerCase();
+      const isBundleID = id.includes('.');
+      const tellPrefix = isBundleID ? 'application id' : 'application';
       let script: string;
 
       if (id.includes('chrome') || id.includes('brave') || id.includes('edge')) {
-        script = `tell application id "${identifier}" to close active tab of front window`;
+        script = `tell ${tellPrefix} "${identifier}" to close active tab of front window`;
       } else if (id.includes('safari')) {
-        script = `tell application id "${identifier}" to close current tab of front window`;
+        script = `tell ${tellPrefix} "${identifier}" to close current tab of front window`;
       } else if (id.includes('firefox')) {
-        script = `tell application id "${identifier}" to close front window`;
+        script = `tell ${tellPrefix} "${identifier}" to close front window`;
       } else {
         return false;
       }
