@@ -167,9 +167,9 @@ function setupIPC() {
   ipcMain.handle('show-settings', async () => {
     const primaryDisplay = screen.getPrimaryDisplay();
     const settingsWindow = new BrowserWindow({
-      x: Math.round(primaryDisplay.bounds.x + primaryDisplay.bounds.width - 620),
+      x: Math.round(primaryDisplay.bounds.x + primaryDisplay.bounds.width - 640),
       y: Math.round(primaryDisplay.bounds.y + 20),
-      width: 600,
+      width: 640,
       height: 800,
       webPreferences: {
         preload: join(__dirname, 'preload.js'),
@@ -178,11 +178,12 @@ function setupIPC() {
       }
     });
     if (process.env.VITE_DEV_SERVER_URL) {
-      settingsWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
+      settingsWindow.loadURL(`${process.env.VITE_DEV_SERVER_URL}?settings=true`);
     } else {
-      settingsWindow.loadFile(join(__dirname, 'dist/index.html'));
+      settingsWindow.loadFile(join(__dirname, 'dist/index.html'), { hash: 'settings=true' });
     }
     settingsWindow.show();
+    return true;
   });
 
   ipcMain.handle('update-settings', (_event, settings: Partial<Configuration['settings']>) => {
@@ -283,9 +284,9 @@ function createTray() {
         click: () => {
           const primaryDisplay = screen.getPrimaryDisplay();
           const settingsWin = new BrowserWindow({
-            x: Math.round(primaryDisplay.bounds.x + primaryDisplay.bounds.width - 620),
+            x: Math.round(primaryDisplay.bounds.x + primaryDisplay.bounds.width - 640),
             y: Math.round(primaryDisplay.bounds.y + 20),
-            width: 600,
+            width: 640,
             height: 800,
             webPreferences: {
               preload: join(__dirname, 'preload.js'),
@@ -294,9 +295,9 @@ function createTray() {
             }
           });
           if (process.env.VITE_DEV_SERVER_URL) {
-            settingsWin.loadURL(process.env.VITE_DEV_SERVER_URL);
+            settingsWin.loadURL(`${process.env.VITE_DEV_SERVER_URL}?settings=true`);
           } else {
-            settingsWin.loadFile(join(__dirname, 'dist/index.html'));
+            settingsWin.loadFile(join(__dirname, 'dist/index.html'), { hash: 'settings=true' });
           }
           settingsWin.show();
         }

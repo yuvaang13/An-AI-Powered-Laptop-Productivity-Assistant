@@ -2,12 +2,22 @@ import React, { useState } from 'react';
 import { Configuration } from '../../types';
 
 interface SettingsProps {
-  configuration: Configuration;
-  onClose?: () => void;
+  configuration: Configuration | null;
 }
 
-export const Settings: React.FC<SettingsProps> = ({ configuration, onClose }) => {
-  const [settings, setSettings] = useState(configuration.settings);
+export const Settings: React.FC<SettingsProps> = ({ configuration }) => {
+  const [settings, setSettings] = useState(() => configuration?.settings ?? {
+    distractingApps: [],
+    restrictedKeywords: [],
+    monitoredBrowsers: [],
+    ollamaURL: 'http://localhost:11434/api/generate',
+    ollamaModel: 'gemma3:1b',
+    accessDurations: [300, 600, 900],
+    accessDurationLabels: ['5 Mins', '10 Mins', '15 Mins'],
+    productiveTasks: [],
+    productiveApps: [],
+    justificationCountdownDuration: 15
+  });
 
   const handleSave = () => {
     window.mindgateAPI.updateSettings(settings);
@@ -178,22 +188,20 @@ export const Settings: React.FC<SettingsProps> = ({ configuration, onClose }) =>
           Save Settings
         </button>
 
-        {onClose && (
-          <button
-            onClick={onClose}
-            style={{
-              padding: '10px 20px',
-              borderRadius: 8,
-              background: '#444',
-              border: 'none',
-              color: 'white',
-              fontSize: 14,
-              cursor: 'pointer'
-            }}
-          >
-            Close
-          </button>
-        )}
+        <button
+          onClick={() => window.close()}
+          style={{
+            padding: '10px 20px',
+            borderRadius: 8,
+            background: '#444',
+            border: 'none',
+            color: 'white',
+            fontSize: 14,
+            cursor: 'pointer'
+          }}
+        >
+          Close
+        </button>
       </div>
     </div>
   );
