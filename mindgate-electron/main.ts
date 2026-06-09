@@ -292,7 +292,7 @@ function setupEventHandlers() {
     }
   };
 
-  workspaceMonitor.startMonitoring();
+  workspaceMonitor.startEventDrivenMonitoring();
 }
 
 function createTrayIcon(): Electron.NativeImage {
@@ -359,6 +359,11 @@ app.whenReady().then(async () => {
     app.dock.hide();
   }
   await initialize();
+});
+
+app.on('will-quit', () => {
+  console.log('[Main] Cleaning up — stopping workspace observer');
+  workspaceMonitor?.stopMonitoring();
 });
 
 app.on('activate', () => {

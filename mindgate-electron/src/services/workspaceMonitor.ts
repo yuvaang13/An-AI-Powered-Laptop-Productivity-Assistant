@@ -1,6 +1,7 @@
 import type { ActiveWindowInfo, Configuration } from '../types.js';
 import type { DecisionEngine } from './decisionEngine.js';
 import type { SystemMonitor } from './platformWrapper.js';
+import { WorkspaceObserver } from '../platform/mac/workspaceObserver.js';
 
 const DISTRACTING_DOMAINS: string[] = [
   // ── Social Media & Microblogging ──
@@ -248,13 +249,11 @@ export class WorkspaceMonitor {
   private monitor: SystemMonitor;
   private configuration: Configuration;
   private decisionEngine: DecisionEngine | null = null;
-  private lastCheckTime: number = 0;
-  private debounceInterval: number = 0.3;
-  private promptRepeatInterval: number = 5;
+  private promptRepeatInterval: number = 10;
   private lastPromptTime: number = 0;
   private activePromptIdentifier: string | null = null;
-  private hasInitialCheckRun: boolean = false;
-  private lastActiveWindowIdentifier: string | null = null;
+  private observer: WorkspaceObserver | null = null;
+  private browserPollTimer: NodeJS.Timeout | null = null;
 
   constructor(configuration: Configuration, monitor: SystemMonitor) {
     this.configuration = configuration;
@@ -273,58 +272,131 @@ export class WorkspaceMonitor {
     this.configuration = config;
   }
 
-  async checkWorkspace(): Promise<boolean> {
+  // ── Public API ──
+
+  onDistractionDetected?: (window: ActiveWindowInfo) => void;
+  onClearPrompt?: () => void;
+
+  startEventDrivenMonitoring(): void {
+    console.log('[Monitor] Starting event-driven monitoring');
+    this.observer = new WorkspaceObserver();
+
+    this.observer.on('app-activated', (appName: string) => {
+      this.handleAppActivation(appName).catch(err =>
+        console.error('[Monitor] handleAppActivation error:', err)
+      );
+    });
+
+    this.observer.start();
+
+    // Immediate initial check
+    setTimeout(() => {
+      this.fullCheck().catch(err =>
+        console.error('[Monitor] initial check failed:', err)
+      );
+    }, 500);
+  }
+
+  stopMonitoring(): void {
+    console.log('[Monitor] Stopping monitoring');
+    this.stopBrowserPoll();
+    this.observer?.stop();
+    this.observer = null;
+    this.activePromptIdentifier = null;
+    this.lastPromptTime = 0;
+  }
+
+  // ── App Activation Handler ──
+
+  private async handleAppActivation(appName: string): Promise<void> {
+    console.log('[Monitor] App activated:', appName);
+
+    // Get full window info
+    const window = await this.monitor.getActiveWindow();
+    if (!window) return;
+
+    console.log('[Monitor] Active window:', window.processName, '| Title:', window.windowTitle, '| URL:', window.browserURL);
+
+    // If it's a browser, start URL polling (catches tab switches)
+    if (this.isBrowser(window)) {
+      this.startBrowserPoll();
+    } else {
+      this.stopBrowserPoll();
+    }
+
+    // Run detection immediately
+    await this.performDetection(window);
+  }
+
+  // ── Detection Pipeline ──
+
+  private async performDetection(window: ActiveWindowInfo): Promise<boolean> {
+    // Skip if access is already granted
+    if (this.decisionEngine?.hasActiveAccess(window)) {
+      console.log('[Monitor] Access already granted for', window.processName);
+      return false;
+    }
+
+    const identifier = this.getAppIdentifier(window);
     const now = Date.now() / 1000;
-
-    const activeWindow = await this.monitor.getActiveWindow();
-    if (!activeWindow) {
-      console.log('No active window detected');
-      return false;
-    }
-
-    const identifier = this.getAppIdentifier(activeWindow);
-
-    // If active window changed, skip debounce and check immediately
-    if (identifier !== this.lastActiveWindowIdentifier) {
-      console.log('Active window changed:', this.lastActiveWindowIdentifier, '->', identifier);
-      this.lastActiveWindowIdentifier = identifier;
-      this.lastCheckTime = 0;
-    }
-
-    if (now - this.lastCheckTime < this.debounceInterval) {
-      return false;
-    }
-    this.lastCheckTime = now;
-
-    console.log('Active window:', activeWindow.processName, '| Title:', activeWindow.windowTitle, '| BundleID:', activeWindow.bundleID, '| URL:', activeWindow.browserURL);
-
-    if (!this.hasInitialCheckRun) {
-      this.hasInitialCheckRun = true;
-    }
-
-    const isDistracting = this.isDistracting(activeWindow);
-    console.log('Is distracting?', isDistracting);
+    const isDistracting = this.isDistracting(window);
+    console.log('[Monitor] Is distracting?', isDistracting);
 
     if (isDistracting) {
-      if (this.decisionEngine?.hasActiveAccess(activeWindow)) {
-        console.log('Access already granted for', activeWindow.processName);
-        return false;
-      }
-
-      const timeSinceLastPrompt = now - this.lastPromptTime;
-      if (timeSinceLastPrompt > this.promptRepeatInterval || this.lastPromptTime === 0) {
-        console.log('Distraction detected — firing prompt for', activeWindow.processName);
+      if (this.activePromptIdentifier !== identifier || now - this.lastPromptTime > this.promptRepeatInterval || this.lastPromptTime === 0) {
+        console.log('[Monitor] Firing distraction detection for', window.processName);
         this.lastPromptTime = now;
         this.activePromptIdentifier = identifier;
-        this.onDistractionDetected?.(activeWindow);
+        this.onDistractionDetected?.(window);
         return true;
       }
     } else if (this.activePromptIdentifier === identifier) {
+      console.log('[Monitor] No longer distracting — clearing prompt');
       this.clearActivePrompt();
     }
 
     return false;
   }
+
+  // Full check run on a timer (used by browser poll)
+  private async fullCheck(): Promise<boolean> {
+    const window = await this.monitor.getActiveWindow();
+    if (!window) return false;
+    return this.performDetection(window);
+  }
+
+  // ── Browser URL Polling ──
+
+  private startBrowserPoll(): void {
+    if (this.browserPollTimer) return;
+    console.log('[Monitor] Starting 5s browser URL poll');
+    this.browserPollTimer = setInterval(async () => {
+      try {
+        const window = await this.monitor.getActiveWindow();
+        if (!window) return;
+
+        // Stop poll if no longer in a browser
+        if (!this.isBrowser(window)) {
+          console.log('[Monitor] No longer in browser — stopping poll');
+          this.stopBrowserPoll();
+          return;
+        }
+
+        await this.performDetection(window);
+      } catch (err) {
+        console.error('[Monitor] Browser poll error:', err);
+      }
+    }, 5000);
+  }
+
+  private stopBrowserPoll(): void {
+    if (this.browserPollTimer) {
+      clearInterval(this.browserPollTimer);
+      this.browserPollTimer = null;
+    }
+  }
+
+  // ── Utilities ──
 
   getAppIdentifier(window: ActiveWindowInfo): string {
     return window.bundleID || window.exeName || window.processName;
@@ -340,7 +412,7 @@ export class WorkspaceMonitor {
     const bundleID = window.bundleID?.toLowerCase() || '';
     const exeName = window.exeName?.toLowerCase() || '';
 
-    // 1. Check against distracting apps list (process/bundle/exe name match)
+    // 1. Check against distracting apps list
     if (this.configuration.settings.distractingApps.some(app => {
       const needle = app.toLowerCase();
       return processName.includes(needle) || bundleID.includes(needle) || exeName.includes(needle);
@@ -351,19 +423,14 @@ export class WorkspaceMonitor {
 
     // 2. If it's a browser, check for distracting websites
     if (this.isBrowser(window)) {
-      // 2a. Domain-based blacklist (most reliable)
       if (this.isDistractionDomain(window.browserURL || '')) {
         console.log(`[Distraction] Domain matched: "${window.browserURL}"`);
         return true;
       }
-
-      // 2b. Regex-based title analysis
       if (this.isTitleDistracting(window.windowTitle)) {
         console.log(`[Distraction] Title matched pattern: "${window.windowTitle}"`);
         return true;
       }
-
-      // 2c. Keyword matching from config (fallback)
       if (this.hasRestrictedKeyword(window)) {
         console.log(`[Distraction] Keyword matched`);
         return true;
@@ -386,21 +453,16 @@ export class WorkspaceMonitor {
 
   private isDistractionDomain(browserURL: string): boolean {
     if (!browserURL) return false;
-
     try {
       const url = new URL(browserURL);
       let hostname = url.hostname.toLowerCase();
-
       hostname = hostname.replace(/^(www|m|mobile)\./, '');
-
-      const match = DISTRACTING_DOMAINS.some(domain => {
-        return hostname === domain || hostname.endsWith('.' + domain);
-      });
-
+      const match = DISTRACTING_DOMAINS.some(domain =>
+        hostname === domain || hostname.endsWith('.' + domain)
+      );
       if (match) {
         console.log(`[Distraction] Blacklisted domain: "${hostname}" from URL: "${browserURL}"`);
       }
-
       return match;
     } catch {
       return false;
@@ -409,20 +471,16 @@ export class WorkspaceMonitor {
 
   private isTitleDistracting(windowTitle: string): boolean {
     if (!windowTitle) return false;
-
     const match = TITLE_DISTRACTION_PATTERNS.some(pattern => pattern.test(windowTitle));
-
     if (match) {
       console.log(`[Distraction] Title pattern matched: "${windowTitle}"`);
     }
-
     return match;
   }
 
   private hasRestrictedKeyword(window: ActiveWindowInfo): boolean {
     const windowTitle = window.windowTitle.toLowerCase();
     const browserURL = window.browserURL?.toLowerCase() || '';
-
     return this.configuration.settings.restrictedKeywords.some(kw => {
       const keyword = kw.toLowerCase();
       if (windowTitle.includes(keyword)) return true;
@@ -433,25 +491,5 @@ export class WorkspaceMonitor {
       } catch {}
       return false;
     });
-  }
-
-  onDistractionDetected?: (window: ActiveWindowInfo) => void;
-  onClearPrompt?: () => void;
-
-  startMonitoring(intervalMs: number = 500): void {
-    console.log('Workspace monitoring started');
-    this.checkWorkspace().catch(err => {
-      console.error('Initial workspace check failed:', err);
-    });
-    setInterval(async () => {
-      try {
-        const result = await this.checkWorkspace();
-        if (result) {
-          console.log('Workspace check completed, distraction detected');
-        }
-      } catch (err) {
-        console.error('Workspace check failed:', err);
-      }
-    }, intervalMs);
   }
 }
