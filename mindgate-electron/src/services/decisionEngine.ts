@@ -1,5 +1,5 @@
 import { OllamaService } from './ollamaService.js';
-import { ActiveWindowInfo, DecisionResult, Configuration } from '../types.js';
+import { ActiveWindowInfo, ChatMessage, ChatResponse, Configuration } from '../types.js';
 
 export class DecisionEngine {
   private ollamaService: OllamaService;
@@ -7,6 +7,7 @@ export class DecisionEngine {
   private accessTimer: NodeJS.Timeout | null = null;
   private grantedAppIdentifier: string | null = null;
   private accessExpiresAt: number | null = null;
+  private chatHistory: ChatMessage[] = [];
 
   constructor(private configuration: Configuration) {
     this.ollamaService = new OllamaService(
@@ -23,7 +24,61 @@ export class DecisionEngine {
     return this.ollamaService.checkConnection();
   }
 
-  async evaluateRequest(userInput: string): Promise<DecisionResult> {
+  private getDistractionContext(): string {
+    if (!this.currentApp) return 'Accessing a distracting website or app';
+    const parts: string[] = [];
+    if (this.currentApp.browserURL) {
+      try {
+        const url = new URL(this.currentApp.browserURL);
+        parts.push(`Website: ${url.hostname}${url.pathname}`);
+      } catch {
+        parts.push(`URL: ${this.currentApp.browserURL}`);
+      }
+    }
+    if (this.currentApp.windowTitle) {
+      parts.push(`Window: ${this.currentApp.windowTitle}`);
+    }
+    parts.push(`App: ${this.currentApp.processName}`);
+    return parts.join(' | ');
+  }
+
+  async generateFirstMessage(): Promise<string> {
+    this.chatHistory = [];
+    const context = this.getDistractionContext();
+    const firstPrompt = `You are MindGate, a strict but fair productivity AI mentor. The user is trying to access: ${context}
+
+Your first message to them should be a brief, firm question asking why they need access. Keep it to one sentence. Be direct but not rude. Start your response with "MindGate:".`;
+    const response = await this.ollamaService.generateRawResponse(firstPrompt);
+    const clean = response.replace(/^MindGate:\s*/i, '').trim();
+    this.chatHistory.push({ role: 'ai', content: clean, timestamp: Date.now() });
+    return clean;
+  }
+
+  async sendChatMessage(userInput: string): Promise<ChatResponse> {
+    this.chatHistory.push({ role: 'user', content: userInput, timestamp: Date.now() });
+
+    const context = this.getDistractionContext();
+    const response = await this.ollamaService.chat(this.chatHistory, context);
+    const cleanResponse = response.replace(/^MindGate:\s*/i, '').trim();
+
+    this.chatHistory.push({ role: 'ai', content: cleanResponse, timestamp: Date.now() });
+
+    if (this.parseApproval(cleanResponse)) {
+      return { message: cleanResponse, isApproved: true };
+    }
+
+    return { message: cleanResponse, isApproved: null };
+  }
+
+  private parseApproval(response: string): boolean {
+    return response.toUpperCase().includes('APPROVED');
+  }
+
+  resetChat(): void {
+    this.chatHistory = [];
+  }
+
+  async evaluateRequest(userInput: string): Promise<{ isApproved: boolean; message: string }> {
     const systemPrompt = `
 You are a highly advanced, strict productivity mentor. The user is trying to access a distracting app. Their reason is: '${userInput}'.
 If this is genuinely essential for immediate work, task tracking, or safety, respond only with the word 'YES'.
@@ -35,7 +90,7 @@ Current productive apps: ${this.configuration.settings.productiveApps.join(', ')
 
     try {
       const response = await this.ollamaService.generateRawResponse(systemPrompt);
-      const isApproved = this.parseApproval(response);
+      const isApproved = response.trim().toUpperCase().startsWith('YES');
       const message = isApproved
         ? 'Access approved. Please select a duration.'
         : 'Access denied. Stay focused on your work.';
@@ -47,11 +102,6 @@ Current productive apps: ${this.configuration.settings.productiveApps.join(', ')
         message: 'AI service unavailable. Access denied.'
       };
     }
-  }
-
-  private parseApproval(response: string): boolean {
-    const normalized = response.trim().toUpperCase();
-    return normalized.startsWith('YES');
   }
 
   grantAccess(duration: number): void {
@@ -111,6 +161,7 @@ Current productive apps: ${this.configuration.settings.productiveApps.join(', ')
 
   updateConfiguration(config: Configuration) {
     this.configuration = config;
+    this.ollamaService.updateConfig(config.settings.ollamaURL, config.settings.ollamaModel);
   }
 
   onAccessExpired?: (appIdentifier: string | null) => void;

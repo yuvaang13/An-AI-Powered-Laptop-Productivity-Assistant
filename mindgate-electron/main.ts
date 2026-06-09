@@ -131,6 +131,26 @@ function setupIPC() {
     return await requestAccessibilityPermissionsIfNeeded();
   });
 
+  ipcMain.handle('generate-first-message', async () => {
+    const connected = await decisionEngine.checkOllamaConnection();
+    if (!connected) {
+      return 'MindGate AI is not connected. Please start Ollama.';
+    }
+    return await decisionEngine.generateFirstMessage();
+  });
+
+  ipcMain.handle('send-chat-message', async (_event, userInput: string) => {
+    const connected = await decisionEngine.checkOllamaConnection();
+    if (!connected) {
+      return { message: 'Ollama service unavailable. Access denied.', isApproved: false };
+    }
+    return await decisionEngine.sendChatMessage(userInput);
+  });
+
+  ipcMain.handle('reset-chat', async () => {
+    decisionEngine.resetChat();
+  });
+
   ipcMain.handle('evaluate-request', async (_event, userInput: string) => {
     const connected = await decisionEngine.checkOllamaConnection();
     if (!connected) {

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Configuration, DecisionResult } from './types';
+import { Configuration } from './types';
+import './styles/glassmorphism.css';
 import { LiquidGlassOverlay } from './components/overlay/Overlay';
 
 const App: React.FC = () => {
@@ -24,14 +25,6 @@ const App: React.FC = () => {
       setIsOllamaConnected(connected);
     });
   }, []);
-
-  const handleSubmit = async (userInput: string): Promise<DecisionResult | void> => {
-    const result = await window.mindgateAPI.evaluateRequest(userInput);
-    if (!result.isApproved) {
-      window.mindgateAPI.closeDistraction();
-    }
-    return result;
-  };
 
   const handleClose = () => {
     setIsOverlayVisible(false);
@@ -64,7 +57,6 @@ const App: React.FC = () => {
       <LiquidGlassOverlay
         visible={isOverlayVisible}
         configuration={configuration}
-        onSubmit={handleSubmit}
         onClose={handleClose}
       />
     </>

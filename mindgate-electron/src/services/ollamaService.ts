@@ -1,4 +1,4 @@
-import { DecisionResult } from '../types.js';
+import { DecisionResult, ChatMessage } from '../types.js';
 
 export class OllamaService {
   private baseURL: string;
@@ -134,5 +134,34 @@ export class OllamaService {
     
     console.error('Ollama raw request failed after retries:', lastError);
     throw lastError;
+  }
+
+  updateConfig(baseURL: string, model: string): void {
+    this.baseURL = baseURL;
+    this.model = model;
+  }
+
+  async chat(messages: ChatMessage[], distractionContext?: string): Promise<string> {
+    const systemPrompt = `You are MindGate, a strict but fair productivity AI mentor. Your role is to help users stay focused by challenging their distractions.
+
+Rules:
+- You speak conversationally but remain firm.
+- Your goal is to determine if the user genuinely needs access to a distracting website or app.
+- Ask probing questions. Challenge weak excuses. Acknowledge legitimate needs.
+- Keep responses concise (1-3 sentences).
+- At any point, if you are fully convinced the user has a legitimate, time-sensitive reason, include the exact word "APPROVED" in your response.
+- If the user fails to convince you or the 25-second timer runs out, you will deny access.
+
+Distraction context: ${distractionContext || 'Accessing a distracting website or app'}
+
+Conversation history:`;
+
+    const conversationText = messages.map(m => {
+      const label = m.role === 'user' ? 'User' : 'MindGate';
+      return `${label}: ${m.content}`;
+    }).join('\n\n');
+
+    const fullPrompt = `${systemPrompt}\n\n${conversationText}\n\nMindGate:`;
+    return this.generateRawResponse(fullPrompt);
   }
 }

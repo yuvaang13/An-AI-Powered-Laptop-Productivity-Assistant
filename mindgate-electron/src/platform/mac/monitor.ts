@@ -88,19 +88,20 @@ end tell
     if (!bundleID) return null;
 
     try {
+      const bid = bundleID.toLowerCase();
       let script: string;
 
-      if (bundleID.includes('safari')) {
+      if (bid.includes('safari')) {
         script = `tell application id "${bundleID}"
   if (count of windows) is 0 then return ""
   return URL of current tab of front window
 end tell`;
-      } else if (bundleID.includes('chrome') || bundleID.includes('brave') || bundleID.includes('edge')) {
+      } else if (bid.includes('chrome') || bid.includes('brave') || bid.includes('edge')) {
         script = `tell application id "${bundleID}"
   if (count of windows) is 0 then return ""
   return URL of active tab of front window
 end tell`;
-      } else if (bundleID.includes('firefox')) {
+      } else if (bid.includes('firefox')) {
         script = `tell application id "${bundleID}"
   if (count of windows) is 0 then return ""
   set windowTitle to name of front window
@@ -126,13 +127,14 @@ end tell`;
     if (!bundleID) return false;
 
     try {
+      const bid = bundleID.toLowerCase();
       let script: string;
 
-      if (bundleID.includes('chrome') || bundleID.includes('brave') || bundleID.includes('edge')) {
+      if (bid.includes('chrome') || bid.includes('brave') || bid.includes('edge')) {
         script = `tell application id "${bundleID}" to close active tab of front window`;
-      } else if (bundleID.includes('safari')) {
+      } else if (bid.includes('safari')) {
         script = `tell application id "${bundleID}" to close current tab of front window`;
-      } else if (bundleID.includes('firefox')) {
+      } else if (bid.includes('firefox')) {
         script = `tell application id "${bundleID}" to close front window`;
       } else {
         return false;

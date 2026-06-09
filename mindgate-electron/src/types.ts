@@ -45,6 +45,17 @@ export interface Configuration {
   };
 }
 
+export interface ChatMessage {
+  role: 'user' | 'ai' | 'system';
+  content: string;
+  timestamp: number;
+}
+
+export interface ChatResponse {
+  message: string;
+  isApproved: boolean | null;
+}
+
 export interface DecisionResult {
   isApproved: boolean;
   message: string;

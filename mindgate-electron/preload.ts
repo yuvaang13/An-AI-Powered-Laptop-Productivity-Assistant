@@ -3,6 +3,9 @@ import type { Configuration } from './src/types.js';
 
 contextBridge.exposeInMainWorld('mindgateAPI', {
   checkOllamaConnection: () => ipcRenderer.invoke('check-ollama-connection'),
+  generateFirstMessage: () => ipcRenderer.invoke('generate-first-message'),
+  sendChatMessage: (userInput: string) => ipcRenderer.invoke('send-chat-message', userInput),
+  resetChat: () => ipcRenderer.invoke('reset-chat'),
   evaluateRequest: (userInput: string) => ipcRenderer.invoke('evaluate-request', userInput),
   grantAccess: (index: number) => ipcRenderer.invoke('grant-access', index),
   getConfiguration: () => ipcRenderer.invoke('get-configuration'),
@@ -33,6 +36,9 @@ declare global {
   interface Window {
     mindgateAPI: {
       checkOllamaConnection: () => Promise<boolean>;
+      generateFirstMessage: () => Promise<string>;
+      sendChatMessage: (userInput: string) => Promise<{ message: string; isApproved: boolean | null }>;
+      resetChat: () => void;
       evaluateRequest: (userInput: string) => Promise<{ isApproved: boolean; message: string }>;
       grantAccess: (index: number) => void;
       getConfiguration: () => Promise<Configuration>;

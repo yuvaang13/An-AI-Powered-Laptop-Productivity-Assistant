@@ -1,46 +1,70 @@
-import React, { useState } from 'react';
-import { Configuration, DecisionResult } from '../../types';
+import React, { useState, useRef, useEffect } from 'react';
+import { Configuration, ChatMessage } from '../../types';
 import { TakeoverView } from '../takeover/TakeoverView';
+import '../../styles/glassmorphism.css';
 
 interface OverlayProps {
   visible: boolean;
   configuration: Configuration;
-  onSubmit: (userInput: string) => Promise<DecisionResult | void>;
   onClose: () => void;
 }
 
-export const LiquidGlassOverlay: React.FC<OverlayProps> = ({ visible, configuration, onSubmit, onClose }) => {
-  const [userInput, setUserInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [aiResponse, setAiResponse] = useState('');
-  const [showDurationSelection, setShowDurationSelection] = useState(false);
-  const [showDeniedMessage, setShowDeniedMessage] = useState(false);
-  const [showTakeoverView, setShowTakeoverView] = useState(false);
-  const [countdownSeconds, setCountdownSeconds] = useState(0);
-  const [remainingAccessTime, setRemainingAccessTime] = useState<number | null>(null);
-  const [isTextareaFocused, setIsTextareaFocused] = useState(false);
+type OverlayState = 'chat' | 'loading' | 'duration' | 'denied' | 'takeover';
 
-  React.useEffect(() => {
+export const LiquidGlassOverlay: React.FC<OverlayProps> = ({ visible, configuration, onClose }) => {
+  const [state, setState] = useState<OverlayState>('chat');
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [userInput, setUserInput] = useState('');
+  const [countdownSeconds, setCountdownSeconds] = useState(configuration.settings.justificationCountdownDuration);
+  const [remainingAccessTime, setRemainingAccessTime] = useState<number | null>(null);
+  const [aiResponse, setAiResponse] = useState('');
+  const [isInputDisabled, setIsInputDisabled] = useState(false);
+
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  useEffect(() => {
     if (visible) {
-      setCountdownSeconds(configuration.settings.justificationCountdownDuration);
+      setState('chat');
+      setMessages([]);
       setUserInput('');
       setAiResponse('');
-      setIsLoading(false);
-      setShowDurationSelection(false);
-      setShowDeniedMessage(false);
-      setShowTakeoverView(false);
+      setRemainingAccessTime(null);
+      setIsInputDisabled(false);
+      setCountdownSeconds(configuration.settings.justificationCountdownDuration);
+      initChat();
     }
-  }, [visible, configuration.settings.justificationCountdownDuration]);
+  }, [visible]);
 
-  React.useEffect(() => {
+  const initChat = async () => {
+    try {
+      window.mindgateAPI.resetChat();
+      const firstMessage = await window.mindgateAPI.generateFirstMessage();
+      setMessages([{ role: 'ai', content: firstMessage, timestamp: Date.now() }]);
+    } catch {
+      setMessages([{ role: 'ai', content: 'MindGate AI is not connected. Please start Ollama.', timestamp: Date.now() }]);
+    }
+  };
+
+  useEffect(() => {
     const timer = setInterval(() => {
-      if (countdownSeconds > 0) {
-        setCountdownSeconds(s => s - 1);
-      } else if (countdownSeconds === 0 && !isLoading && !showDurationSelection && !showDeniedMessage && !aiResponse && userInput === '') {
-        handleCountdownExpired();
+      if (state === 'chat') {
+        if (countdownSeconds > 0) {
+          setCountdownSeconds(s => s - 1);
+        } else if (countdownSeconds === 0) {
+          handleTimeout();
+        }
       }
-      
-      if (showDurationSelection) {
+
+      if (state === 'duration') {
         window.mindgateAPI.getRemainingAccessTime().then(time => {
           if (time > 0) {
             setRemainingAccessTime(time);
@@ -49,235 +73,211 @@ export const LiquidGlassOverlay: React.FC<OverlayProps> = ({ visible, configurat
       }
     }, 1000);
     return () => clearInterval(timer);
-  }, [countdownSeconds, isLoading, showDurationSelection, showDeniedMessage, aiResponse, userInput]);
+  }, [countdownSeconds, state]);
 
-  const handleTextareaFocus = () => setIsTextareaFocused(true);
-  const handleTextareaBlur = () => setIsTextareaFocused(false);
+  const handleTimeout = async () => {
+    setIsInputDisabled(true);
+    setMessages(prev => [...prev, { role: 'ai', content: "Time's up! Access denied.", timestamp: Date.now() }]);
+    await window.mindgateAPI.closeDistraction();
+    setTimeout(() => {
+      setState('takeover');
+    }, 1000);
+  };
 
   const handleSubmit = async () => {
-    if (!userInput.trim() || isLoading) return;
+    if (!userInput.trim() || isInputDisabled) return;
 
-    setIsLoading(true);
+    const input = userInput.trim();
+    setUserInput('');
+
+    setMessages(prev => [...prev, { role: 'user', content: input, timestamp: Date.now() }]);
+
+    setIsInputDisabled(true);
+    setState('loading');
+
     try {
-      const result = await onSubmit(userInput);
-      if (!result) {
-        setAiResponse('No response received');
-        setShowDeniedMessage(true);
-        handleDeniedMessageDismissed();
-      } else if (result.isApproved) {
-        setAiResponse(result.message);
-        setShowDurationSelection(true);
+      const result = await window.mindgateAPI.sendChatMessage(input);
+
+      if (result.message) {
+        setMessages(prev => [...prev, { role: 'ai', content: result.message, timestamp: Date.now() }]);
+      }
+
+      if (result.isApproved === true) {
+        setAiResponse('Access approved. Please select a duration.');
+        setState('duration');
+        setIsInputDisabled(false);
+      } else if (result.isApproved === false) {
+        setAiResponse('Access denied. Stay focused on your work.');
+        setState('denied');
+        await window.mindgateAPI.closeDistraction();
+        setTimeout(() => setState('takeover'), 1500);
       } else {
-        setAiResponse(result.message);
-        setShowDeniedMessage(true);
-        handleDeniedMessageDismissed();
+        setState('chat');
+        setIsInputDisabled(false);
       }
     } catch {
-      setAiResponse('Error: Unable to get AI response');
-      setShowDeniedMessage(true);
-      handleDeniedMessageDismissed();
+      setMessages(prev => [...prev, { role: 'ai', content: 'Error communicating with AI.', timestamp: Date.now() }]);
+      setState('chat');
+      setIsInputDisabled(false);
     }
-    setIsLoading(false);
-  };
-
-  const handleCountdownExpired = () => {
-    setAiResponse("Time's up! Access denied.");
-    setShowDeniedMessage(true);
-    window.mindgateAPI.closeDistraction();
-    setTimeout(() => onClose(), 2000);
-  };
-
-  const headlineText = () => {
-    if (showDurationSelection) return 'Access granted';
-    if (showDeniedMessage) return 'Access denied';
-    if (isLoading) return 'Checking with AI';
-    if (countdownSeconds > 0) return `Why are you here? (${countdownSeconds}s)`;
-    return 'Why are you here?';
   };
 
   const selectDuration = (index: number) => {
     window.mindgateAPI.grantAccess(index);
     onClose();
-    resetState();
   };
 
-  const resetState = () => {
-    setUserInput('');
-    setAiResponse('');
-    setIsLoading(false);
-    setShowDurationSelection(false);
-    setShowDeniedMessage(false);
-    setShowTakeoverView(false);
-    setCountdownSeconds(0);
-    setRemainingAccessTime(null);
-  };
-
-  const handleDeniedMessageDismissed = () => {
-    window.mindgateAPI.closeDistraction();
-    setShowTakeoverView(true);
-  };
-
-  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setUserInput(e.target.value);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    const isMetaOrCtrl = e.metaKey || e.ctrlKey;
-    if (isMetaOrCtrl && e.key === 'Enter') {
-      e.preventDefault();
-      handleSubmit();
-    }
+  const handleCountdownStyle = () => {
+    const total = configuration.settings.justificationCountdownDuration;
+    const ratio = countdownSeconds / total;
+    if (ratio > 0.5) return { color: 'rgba(255, 159, 10, 0.8)' };
+    if (ratio > 0.25) return { color: 'rgba(255, 69, 58, 0.8)' };
+    return { color: 'rgba(255, 59, 48, 1)' };
   };
 
   if (!visible) return null;
 
-  const content = () => {
-    if (isLoading) {
-      return (
-        <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <p style={{ color: '#333', margin: 0, fontSize: '13px' }}>AI is thinking...</p>
-        </div>
-      );
-    }
-    if (showDurationSelection) {
-      return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <p style={{ fontSize: '13px', color: '#333', textAlign: 'center', margin: 0 }}>Choose duration:</p>
-          {remainingAccessTime !== null && (
-            <p style={{ fontSize: '11px', color: '#666', textAlign: 'center', margin: 0 }}>
-              Access expires in: {remainingAccessTime}s
-            </p>
-          )}
-          <div style={{ display: 'flex', gap: '8px' }}>
-            {configuration.settings.accessDurationLabels.map((label, index) => (
-              <button
-                key={index}
-                onClick={() => selectDuration(index)}
-                style={{
-                  flex: 1,
-                  padding: '8px 0',
-                  borderRadius: '4px',
-                  background: '#e0e0e0',
-                  border: 'none',
-                  color: '#000',
-                  cursor: 'pointer',
-                  fontSize: '13px'
-                }}
-              >
-                {label}
-              </button>
-            ))}
+  const renderChat = () => (
+    <>
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px',
+        overflowY: 'auto',
+        padding: '4px 2px',
+        minHeight: 0,
+      }}>
+        {messages.map((msg, i) => (
+          <div key={i} className={msg.role === 'user' ? 'glass-bubble-user' : 'glass-bubble-ai'}>
+            {msg.content}
           </div>
-        </div>
-      );
-    }
-    if (aiResponse) {
-      return (
-        <div style={{ textAlign: 'center' }}>
-          <p style={{ fontSize: '13px', color: '#333', lineHeight: 1.4 }}>{aiResponse}</p>
-          <button
-            onClick={() => {
-              if (showDeniedMessage) {
-                resetState();
-                setCountdownSeconds(configuration.settings.justificationCountdownDuration);
-              } else {
-                onClose();
-                resetState();
-              }
-            }}
-            style={{
-              marginTop: '14px',
-              padding: '8px 16px',
-              borderRadius: '4px',
-              background: '#e0e0e0',
-              border: 'none',
-              color: '#000',
-              cursor: 'pointer',
-              fontSize: '13px'
-            }}
-          >
-            {showDeniedMessage ? 'Try Again' : 'Close'}
-          </button>
-        </div>
-      );
-    }
-    if (showTakeoverView) {
-      return <TakeoverView configuration={configuration} onDismiss={() => { setShowTakeoverView(false); onClose(); resetState(); }} />;
-    }
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        <p style={{ fontSize: '13px', fontWeight: '500', color: '#333', textAlign: 'center', margin: 0 }}>Why do you need access?</p>
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', padding: '8px', borderRadius: '4px', background: '#f5f5f5', border: '1px solid #ddd' }}>
-          <textarea
-            value={userInput}
-            onChange={handleTextChange}
-            onFocus={handleTextareaFocus}
-            onBlur={handleTextareaBlur}
-            onKeyDown={handleKeyDown}
-            placeholder="I need this because..."
-            style={{
-              flex: 1,
-              background: 'transparent',
-              border: isTextareaFocused ? '1px solid #888' : 'none',
-              color: '#000',
-              fontSize: '13px',
-              resize: 'none',
-              outline: 'none',
-              minHeight: '48px',
-              padding: '8px 12px',
-              borderRadius: '4px'
-            }}
-            spellCheck="false"
-          />
-          <button
-            onClick={handleSubmit}
-            disabled={!userInput.trim() || isLoading}
-            style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '4px',
-              background: userInput.trim() ? '#333' : '#ccc',
-              border: 'none',
-              color: '#fff',
-              cursor: userInput.trim() ? 'pointer' : 'default',
-              fontSize: '14px',
-              flexShrink: 0
-            }}
-          >
-            ↑
-          </button>
-        </div>
+        ))}
+        <div ref={messagesEndRef} />
       </div>
-    );
+
+      <div className="glass-divider" />
+
+      <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
+        <textarea
+          ref={inputRef}
+          value={userInput}
+          onChange={e => setUserInput(e.target.value)}
+          onKeyDown={e => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+              e.preventDefault();
+              handleSubmit();
+            }
+          }}
+          placeholder="Explain why you need access..."
+          className="glass-input"
+          disabled={isInputDisabled}
+          rows={2}
+          style={{ resize: 'none', flex: 1, minHeight: '40px', maxHeight: '80px' }}
+        />
+        <button
+          onClick={handleSubmit}
+          disabled={!userInput.trim() || isInputDisabled}
+          className="glass-btn"
+          style={{ height: '40px', padding: '0 16px', flexShrink: 0 }}
+        >
+          Send
+        </button>
+      </div>
+    </>
+  );
+
+  const renderDuration = () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
+      <p style={{ fontSize: '16px', fontWeight: '600', color: '#fff', textAlign: 'center', margin: 0 }}>
+        {aiResponse}
+      </p>
+      {remainingAccessTime !== null && (
+        <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', textAlign: 'center', margin: 0 }}>
+          Access expires in: {remainingAccessTime}s
+        </p>
+      )}
+      <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
+        {configuration.settings.accessDurationLabels.map((label, index) => (
+          <button
+            key={index}
+            onClick={() => selectDuration(index)}
+            className="glass-btn"
+            style={{ flex: 1, minWidth: '80px' }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderDenied = () => (
+    <div style={{ textAlign: 'center', padding: '20px' }}>
+      <p style={{ fontSize: '16px', fontWeight: '600', color: '#fff', margin: 0 }}>{aiResponse}</p>
+    </div>
+  );
+
+  const renderTakeover = () => (
+    <TakeoverView
+      configuration={configuration}
+      onDismiss={() => { onClose(); }}
+    />
+  );
+
+  const renderContent = () => {
+    switch (state) {
+      case 'loading':
+        return renderChat();
+      case 'duration':
+        return renderDuration();
+      case 'denied':
+        return renderDenied();
+      case 'takeover':
+        return renderTakeover();
+      default:
+        return renderChat();
+    }
   };
 
   return (
     <div
+      className="glass-panel-dark"
       style={{
         position: 'fixed',
-        top: '24px',
-        left: '24px',
-        width: configuration.theme.dimensions.overlayWidth,
-        height: configuration.theme.dimensions.overlayHeight,
-        background: '#ffffff',
-        padding: '20px',
         display: 'flex',
         flexDirection: 'column',
-        gap: '12px',
+        gap: '10px',
+        top: '24px',
+        left: '24px',
+        width: '380px',
+        height: '440px',
+        padding: '20px',
         pointerEvents: 'auto',
-        zIndex: 2147483647
+        zIndex: 2147483647,
       }}
     >
-      <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#000', textAlign: 'center', margin: 0, marginTop: '4px' }}>
-        {headlineText()}
-      </h2>
-
-      {!showDurationSelection && !showDeniedMessage && !isLoading && !aiResponse && (
-        <p style={{ fontSize: '12px', color: '#666', textAlign: 'center', margin: 0 }}>Distraction detected. Explain why.</p>
-      )}
-
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-        {content()}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexShrink: 0,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span className={`glass-dot ${state === 'chat' || state === 'loading' ? 'glass-dot-active' : ''}`} />
+          <span style={{ fontSize: '15px', fontWeight: '600', color: 'rgba(255,255,255,0.9)' }}>
+            MindGate
+          </span>
+        </div>
+        {state === 'chat' && (
+          <span className="glass-countdown" style={handleCountdownStyle()}>
+            {countdownSeconds}s
+          </span>
+        )}
+      </div>
+      <div className="glass-divider" />
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        {renderContent()}
       </div>
     </div>
   );
