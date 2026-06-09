@@ -45,7 +45,7 @@ export class WorkspaceMonitor {
       return false;
     }
 
-    console.log('Active window:', activeWindow.processName, '| Title:', activeWindow.windowTitle);
+    console.log('Active window:', activeWindow.processName, '| Title:', activeWindow.windowTitle, '| BundleID:', activeWindow.bundleID, '| URL:', activeWindow.browserURL);
 
     if (this.hasInitialCheckRun &&
         activeWindow.processName === this.lastWindow?.processName &&
@@ -123,6 +123,8 @@ export class WorkspaceMonitor {
   private hasRestrictedContent(window: ActiveWindowInfo): boolean {
     const windowTitle = window.windowTitle.toLowerCase();
     const browserURL = window.browserURL?.toLowerCase() || '';
+
+    console.log(`[WorkspaceMonitor] Checking restricted content. Title: "${windowTitle}", URL: "${browserURL}"`);
 
     return this.configuration.settings.restrictedKeywords.some(kw => {
       const keyword = kw.toLowerCase();

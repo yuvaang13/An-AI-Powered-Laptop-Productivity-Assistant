@@ -19,6 +19,6 @@ export default defineConfig({
     strictPort: true
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'framer-motion']
+    include: ['react', 'react-dom']
   }
 });

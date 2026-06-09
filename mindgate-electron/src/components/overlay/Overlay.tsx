@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Configuration, DecisionResult } from '../../types';
 import { TakeoverView } from '../takeover/TakeoverView';
 
@@ -132,310 +131,154 @@ export const LiquidGlassOverlay: React.FC<OverlayProps> = ({ visible, configurat
 
   if (!visible) return null;
 
-  return (
-    <AnimatePresence>
-      <motion.div
-        key="overlay"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        transition={{ duration: configuration.theme.animation.transitionDuration }}
-        style={{
-          position: 'fixed',
-          top: '24px',
-          left: '24px',
-width: configuration.theme.dimensions.overlayWidth,
-      height: configuration.theme.dimensions.overlayHeight,
-          borderRadius: '28px',
-          background: 'rgba(10, 10, 12, 0.45)',
-          backdropFilter: 'blur(24px) saturate(1.8)',
-          WebkitBackdropFilter: 'blur(24px) saturate(1.8)',
-          border: '1px solid rgba(255, 255, 255, 0.12)',
-          boxShadow: '0 12px 48px rgba(0, 0, 0, 0.4), 0 0 0 0.5px rgba(255, 255, 255, 0.08) inset',
-          padding: '20px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px',
-          pointerEvents: 'auto',
-          zIndex: 2147483647
-        }}
-      >
-        <button
-          onClick={onClose}
-          style={{
-            position: 'absolute',
-            top: '16px',
-            right: '16px',
-            width: '28px',
-            height: '28px',
-            borderRadius: '50%',
-            background: 'rgba(255, 255, 255, 0.15)',
-            border: 'none',
-            cursor: 'pointer',
-            color: 'rgba(255, 255, 255, 0.7)',
-            fontSize: '16px',
-            fontWeight: 'bold',
-            pointerEvents: 'auto',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-        >
-          ×
-        </button>
-
-        <h2 style={{
-          fontSize: '18px',
-          fontWeight: '600',
-          color: 'rgba(255, 255, 255, 0.95)',
-          textAlign: 'center',
-          margin: 0,
-          marginTop: '4px'
-        }}>
-          {headlineText()}
-        </h2>
-
-        {!showDurationSelection && !showDeniedMessage && !isLoading && !aiResponse && (
-          <p style={{
-            fontSize: '12px',
-            color: 'rgba(255, 255, 255, 0.6)',
-            textAlign: 'center',
-            margin: 0
-          }}>
-            Distraction detected. Explain why.
-          </p>
-        )}
-
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <AnimatePresence mode="wait">
-            {isLoading ? (
-              <motion.div
-                key="loading"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '10px' }}
-              >
-                <div
-                  style={{
-                    width: '18px',
-                    height: '18px',
-                    border: '2px solid rgba(255, 255, 255, 0.3)',
-                    borderTopColor: 'rgba(255, 255, 255, 0.9)',
-                    borderRadius: '50%',
-                    animation: 'spin 1s linear infinite',
-                    margin: '0 auto'
-                  }}
-                />
-                <p style={{ color: 'rgba(255, 255, 255, 0.7)', margin: 0, fontSize: '13px' }}>AI is thinking...</p>
-              </motion.div>
-            ) : showDurationSelection ? (
-              <motion.div
-                key="duration"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}
-              >
-                <p style={{
-                  fontSize: '13px',
-                  color: 'rgba(255, 255, 255, 0.7)',
-                  textAlign: 'center',
-                  margin: 0
-                }}>
-                  Choose duration:
-                </p>
-                {remainingAccessTime !== null && (
-                  <p style={{
-                    fontSize: '11px',
-                    color: 'rgba(255, 255, 255, 0.5)',
-                    textAlign: 'center',
-                    margin: 0
-                  }}>
-                    Access expires in: {remainingAccessTime}s
-                  </p>
-                )}
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  {configuration.settings.accessDurationLabels.map((label, index) => (
-                    <button
-                      key={index}
-                      onClick={() => selectDuration(index)}
-                      style={{
-                        flex: 1,
-                        padding: '8px 0',
-                        borderRadius: '16px',
-                        background: 'rgba(255, 255, 255, 0.22)',
-                        border: 'none',
-                        color: 'rgba(255, 255, 255, 0.9)',
-                        cursor: 'pointer',
-                        fontSize: '13px',
-                        transition: 'background 0.2s ease'
-                      }}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </motion.div>
-            ) : aiResponse ? (
-              <motion.div
-                key="response"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                style={{ textAlign: 'center' }}
-              >
-                <TypingText text={aiResponse} />
-                <button
-                  onClick={() => {
-                    if (showDeniedMessage) {
-                      resetState();
-                      setCountdownSeconds(configuration.settings.justificationCountdownDuration);
-                    } else {
-                      onClose();
-                      resetState();
-                    }
-                  }}
-                  style={{
-                    marginTop: '14px',
-                    padding: '8px 16px',
-                    borderRadius: '16px',
-                    background: 'rgba(255, 255, 255, 0.22)',
-                    border: 'none',
-                    color: 'rgba(255, 255, 255, 0.9)',
-                    cursor: 'pointer',
-                    fontSize: '13px'
-                  }}
-                >
-                  {showDeniedMessage ? 'Try Again' : 'Close'}
-                </button>
-              </motion.div>
-            ) : showTakeoverView ? (
-              <TakeoverView
-                configuration={configuration}
-                onDismiss={() => {
-                  setShowTakeoverView(false);
-                  onClose();
-                  resetState();
-                }}
-              />
-            ) : (
-              <motion.div
-                key="input"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
-              >
-                <p style={{
-                  fontSize: '13px',
-                  fontWeight: '500',
-                  color: 'rgba(255, 255, 255, 0.85)',
-                  textAlign: 'center',
-                  margin: 0
-                }}>
-                  Why do you need access?
-                </p>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'flex-end',
-                  gap: '8px',
-                  padding: '8px',
-                  borderRadius: '18px',
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  border: '1px solid rgba(255, 255, 255, 0.08)'
-                }}>
-                  <textarea
-                    value={userInput}
-                    onChange={handleTextChange}
-                    onFocus={handleTextareaFocus}
-                    onBlur={handleTextareaBlur}
-                    onKeyDown={handleKeyDown}
-                    placeholder="I need this because..."
-                    style={{
-                      flex: 1,
-                      background: 'transparent',
-                      border: isTextareaFocused ? '1px solid rgba(255, 255, 255, 0.4)' : 'none',
-                      color: 'rgba(255, 255, 255, 0.9)',
-                      fontSize: '13px',
-                      resize: 'none',
-                      outline: 'none',
-                      minHeight: '48px',
-                      padding: '8px 12px',
-                      borderRadius: '14px',
-                      transition: 'border 0.15s ease'
-                    }}
-                    spellCheck="false"
-                  />
-                  <button
-                    onClick={handleSubmit}
-                    disabled={!userInput.trim() || isLoading}
-                    style={{
-                      width: '32px',
-                      height: '32px',
-                      borderRadius: '50%',
-                      background: userInput.trim()
-                        ? 'rgba(255, 255, 255, 0.9)'
-                        : 'rgba(255, 255, 255, 0.2)',
-                      border: 'none',
-                      color: userInput.trim() ? '#000' : 'rgba(255, 255, 255, 0.5)',
-                      cursor: userInput.trim() ? 'pointer' : 'default',
-                      fontSize: '14px',
-                      flexShrink: 0
-                    }}
-                  >
-                    ↑
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+  const content = () => {
+    if (isLoading) {
+      return (
+        <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <p style={{ color: '#333', margin: 0, fontSize: '13px' }}>AI is thinking...</p>
         </div>
-
-        <style>{`
-          @keyframes spin {
-            to { transform: rotate(360deg); }
-          }
-        `}</style>
-      </motion.div>
-    </AnimatePresence>
-  );
-};
-
-interface TypingTextProps {
-  text: string;
-}
-
-const TypingText: React.FC<TypingTextProps> = ({ text }) => {
-  const [displayedText, setDisplayedText] = React.useState('');
-
-  React.useEffect(() => {
-    const words = text.split(' ');
-    setDisplayedText('');
-    let wordIndex = 0;
-    
-    const timer = setInterval(() => {
-      if (wordIndex < words.length) {
-        setDisplayedText(prev => {
-          const newText = prev + (prev ? ' ' : '') + words[wordIndex];
-          return newText;
-        });
-        wordIndex++;
-      } else {
-        clearInterval(timer);
-      }
-    }, 100);
-    return () => clearInterval(timer);
-  }, [text]);
+      );
+    }
+    if (showDurationSelection) {
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <p style={{ fontSize: '13px', color: '#333', textAlign: 'center', margin: 0 }}>Choose duration:</p>
+          {remainingAccessTime !== null && (
+            <p style={{ fontSize: '11px', color: '#666', textAlign: 'center', margin: 0 }}>
+              Access expires in: {remainingAccessTime}s
+            </p>
+          )}
+          <div style={{ display: 'flex', gap: '8px' }}>
+            {configuration.settings.accessDurationLabels.map((label, index) => (
+              <button
+                key={index}
+                onClick={() => selectDuration(index)}
+                style={{
+                  flex: 1,
+                  padding: '8px 0',
+                  borderRadius: '4px',
+                  background: '#e0e0e0',
+                  border: 'none',
+                  color: '#000',
+                  cursor: 'pointer',
+                  fontSize: '13px'
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+    if (aiResponse) {
+      return (
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ fontSize: '13px', color: '#333', lineHeight: 1.4 }}>{aiResponse}</p>
+          <button
+            onClick={() => {
+              if (showDeniedMessage) {
+                resetState();
+                setCountdownSeconds(configuration.settings.justificationCountdownDuration);
+              } else {
+                onClose();
+                resetState();
+              }
+            }}
+            style={{
+              marginTop: '14px',
+              padding: '8px 16px',
+              borderRadius: '4px',
+              background: '#e0e0e0',
+              border: 'none',
+              color: '#000',
+              cursor: 'pointer',
+              fontSize: '13px'
+            }}
+          >
+            {showDeniedMessage ? 'Try Again' : 'Close'}
+          </button>
+        </div>
+      );
+    }
+    if (showTakeoverView) {
+      return <TakeoverView configuration={configuration} onDismiss={() => { setShowTakeoverView(false); onClose(); resetState(); }} />;
+    }
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <p style={{ fontSize: '13px', fontWeight: '500', color: '#333', textAlign: 'center', margin: 0 }}>Why do you need access?</p>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', padding: '8px', borderRadius: '4px', background: '#f5f5f5', border: '1px solid #ddd' }}>
+          <textarea
+            value={userInput}
+            onChange={handleTextChange}
+            onFocus={handleTextareaFocus}
+            onBlur={handleTextareaBlur}
+            onKeyDown={handleKeyDown}
+            placeholder="I need this because..."
+            style={{
+              flex: 1,
+              background: 'transparent',
+              border: isTextareaFocused ? '1px solid #888' : 'none',
+              color: '#000',
+              fontSize: '13px',
+              resize: 'none',
+              outline: 'none',
+              minHeight: '48px',
+              padding: '8px 12px',
+              borderRadius: '4px'
+            }}
+            spellCheck="false"
+          />
+          <button
+            onClick={handleSubmit}
+            disabled={!userInput.trim() || isLoading}
+            style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '4px',
+              background: userInput.trim() ? '#333' : '#ccc',
+              border: 'none',
+              color: '#fff',
+              cursor: userInput.trim() ? 'pointer' : 'default',
+              fontSize: '14px',
+              flexShrink: 0
+            }}
+          >
+            ↑
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   return (
-    <p style={{
-      fontSize: '13px',
-      color: 'rgba(255, 255, 255, 0.85)',
-      textAlign: 'center',
-      lineHeight: 1.4
-    }}>
-      {displayedText}
-    </p>
+    <div
+      style={{
+        position: 'fixed',
+        top: '24px',
+        left: '24px',
+        width: configuration.theme.dimensions.overlayWidth,
+        height: configuration.theme.dimensions.overlayHeight,
+        background: '#ffffff',
+        padding: '20px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px',
+        pointerEvents: 'auto',
+        zIndex: 2147483647
+      }}
+    >
+      <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#000', textAlign: 'center', margin: 0, marginTop: '4px' }}>
+        {headlineText()}
+      </h2>
+
+      {!showDurationSelection && !showDeniedMessage && !isLoading && !aiResponse && (
+        <p style={{ fontSize: '12px', color: '#666', textAlign: 'center', margin: 0 }}>Distraction detected. Explain why.</p>
+      )}
+
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        {content()}
+      </div>
+    </div>
   );
 };

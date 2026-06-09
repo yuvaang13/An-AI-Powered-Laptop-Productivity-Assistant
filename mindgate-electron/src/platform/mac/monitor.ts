@@ -116,8 +116,10 @@ end tell
         return null;
       }
 
+      console.log(`[MacMonitor] Fetching URL for bundle: ${bundleID}`);
       const { stdout } = await execAsync(`osascript -e '${script}'`, { timeout: 3000 });
       const result = stdout.trim();
+      console.log(`[MacMonitor] URL fetch result: "${result}"`);
       
       if (bundleID.includes('firefox')) {
         return result || null;
@@ -125,7 +127,7 @@ end tell
       
       return result || null;
     } catch (error) {
-      console.error('Failed to get browser URL:', error);
+      console.error('[MacMonitor] Failed to get browser URL:', error);
       return null;
     }
   }
