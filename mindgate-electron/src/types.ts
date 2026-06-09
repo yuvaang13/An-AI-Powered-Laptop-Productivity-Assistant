@@ -54,6 +54,7 @@ export interface ChatMessage {
 export interface ChatResponse {
   message: string;
   isApproved: boolean | null;
+  durationMinutes?: number;
 }
 
 export interface DecisionResult {

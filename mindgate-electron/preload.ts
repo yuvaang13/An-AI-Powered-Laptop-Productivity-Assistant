@@ -7,7 +7,7 @@ contextBridge.exposeInMainWorld('mindgateAPI', {
   sendChatMessage: (userInput: string) => ipcRenderer.invoke('send-chat-message', userInput),
   resetChat: () => ipcRenderer.invoke('reset-chat'),
   evaluateRequest: (userInput: string) => ipcRenderer.invoke('evaluate-request', userInput),
-  grantAccess: (index: number) => ipcRenderer.invoke('grant-access', index),
+  grantAccess: (durationSeconds: number) => ipcRenderer.invoke('grant-access', durationSeconds),
   getConfiguration: () => ipcRenderer.invoke('get-configuration'),
   hideOverlay: () => ipcRenderer.invoke('hide-overlay'),
   closeDistraction: () => ipcRenderer.invoke('close-distraction'),
@@ -37,10 +37,10 @@ declare global {
     mindgateAPI: {
       checkOllamaConnection: () => Promise<boolean>;
       generateFirstMessage: () => Promise<string>;
-      sendChatMessage: (userInput: string) => Promise<{ message: string; isApproved: boolean | null }>;
+      sendChatMessage: (userInput: string) => Promise<{ message: string; isApproved: boolean | null; durationMinutes?: number }>;
       resetChat: () => void;
       evaluateRequest: (userInput: string) => Promise<{ isApproved: boolean; message: string }>;
-      grantAccess: (index: number) => void;
+      grantAccess: (durationSeconds: number) => Promise<void>;
       getConfiguration: () => Promise<Configuration>;
       hideOverlay: () => void;
       closeDistraction: () => void;

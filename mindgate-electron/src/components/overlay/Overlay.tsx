@@ -9,7 +9,7 @@ interface OverlayProps {
   onClose: () => void;
 }
 
-type OverlayState = 'chat' | 'loading' | 'duration' | 'denied' | 'takeover';
+type OverlayState = 'chat' | 'loading' | 'approved' | 'denied' | 'takeover';
 
 export const LiquidGlassOverlay: React.FC<OverlayProps> = ({ visible, configuration, onClose }) => {
   const [state, setState] = useState<OverlayState>('chat');
@@ -64,16 +64,12 @@ export const LiquidGlassOverlay: React.FC<OverlayProps> = ({ visible, configurat
         }
       }
 
-      if (state === 'duration') {
-        window.mindgateAPI.getRemainingAccessTime().then(time => {
-          if (time > 0) {
-            setRemainingAccessTime(time);
-          }
-        });
+      if (state === 'approved' && remainingAccessTime !== null) {
+        setRemainingAccessTime(t => t !== null ? Math.max(0, t - 1) : null);
       }
     }, 1000);
     return () => clearInterval(timer);
-  }, [countdownSeconds, state]);
+  }, [countdownSeconds, state, remainingAccessTime]);
 
   const handleTimeout = async () => {
     setIsInputDisabled(true);
@@ -103,9 +99,12 @@ export const LiquidGlassOverlay: React.FC<OverlayProps> = ({ visible, configurat
       }
 
       if (result.isApproved === true) {
-        setAiResponse('Access approved. Please select a duration.');
-        setState('duration');
-        setIsInputDisabled(false);
+        const mins = result.durationMinutes || 10;
+        setAiResponse(`Access approved for ${mins} minutes. Stay focused.`);
+        setState('approved');
+        window.mindgateAPI.grantAccess(mins * 60);
+        setRemainingAccessTime(mins * 60);
+        setTimeout(() => onClose(), 2500);
       } else if (result.isApproved === false) {
         setAiResponse('Access denied. Stay focused on your work.');
         setState('denied');
@@ -120,11 +119,6 @@ export const LiquidGlassOverlay: React.FC<OverlayProps> = ({ visible, configurat
       setState('chat');
       setIsInputDisabled(false);
     }
-  };
-
-  const selectDuration = (index: number) => {
-    window.mindgateAPI.grantAccess(index);
-    onClose();
   };
 
   const handleCountdownStyle = () => {
@@ -187,28 +181,16 @@ export const LiquidGlassOverlay: React.FC<OverlayProps> = ({ visible, configurat
     </>
   );
 
-  const renderDuration = () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
-      <p style={{ fontSize: '16px', fontWeight: '600', color: '#fff', textAlign: 'center', margin: 0 }}>
+  const renderApproved = () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
+      <p style={{ fontSize: '16px', fontWeight: '600', color: '#30D158', textAlign: 'center', margin: 0 }}>
         {aiResponse}
       </p>
       {remainingAccessTime !== null && (
-        <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', textAlign: 'center', margin: 0 }}>
-          Access expires in: {remainingAccessTime}s
+        <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', textAlign: 'center', margin: 0 }}>
+          Time remaining: {Math.floor(remainingAccessTime / 60)}m {remainingAccessTime % 60}s
         </p>
       )}
-      <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
-        {configuration.settings.accessDurationLabels.map((label, index) => (
-          <button
-            key={index}
-            onClick={() => selectDuration(index)}
-            className="glass-btn"
-            style={{ flex: 1, minWidth: '80px' }}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
     </div>
   );
 
@@ -229,8 +211,8 @@ export const LiquidGlassOverlay: React.FC<OverlayProps> = ({ visible, configurat
     switch (state) {
       case 'loading':
         return renderChat();
-      case 'duration':
-        return renderDuration();
+      case 'approved':
+        return renderApproved();
       case 'denied':
         return renderDenied();
       case 'takeover':

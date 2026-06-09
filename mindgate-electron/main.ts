@@ -162,10 +162,9 @@ function setupIPC() {
     return await decisionEngine.evaluateRequest(userInput);
   });
 
-  ipcMain.handle('grant-access', (_event, index: number) => {
-    const duration = configurationService.getConfiguration().settings.accessDurations[index];
-    if (duration) {
-      decisionEngine.grantAccess(duration);
+  ipcMain.handle('grant-access', (_event, durationSeconds: number) => {
+    if (durationSeconds && durationSeconds > 0) {
+      decisionEngine.grantAccess(durationSeconds);
     }
   });
 

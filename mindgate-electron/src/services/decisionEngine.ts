@@ -64,7 +64,8 @@ Your first message to them should be a brief, firm question asking why they need
     this.chatHistory.push({ role: 'ai', content: cleanResponse, timestamp: Date.now() });
 
     if (this.parseKeyword(cleanResponse, 'APPROVED')) {
-      return { message: cleanResponse, isApproved: true };
+      const mins = this.parseDurationMinutes(cleanResponse);
+      return { message: cleanResponse, isApproved: true, durationMinutes: mins };
     }
 
     if (this.parseKeyword(cleanResponse, 'DENIED')) {
@@ -76,6 +77,15 @@ Your first message to them should be a brief, firm question asking why they need
 
   private parseKeyword(response: string, keyword: string): boolean {
     return response.toUpperCase().includes(keyword);
+  }
+
+  private parseDurationMinutes(response: string): number {
+    const match = response.match(/APPROVED\s*[:]?\s*(\d+)/i);
+    if (match) {
+      const mins = parseInt(match[1], 10);
+      if ([5, 10, 15].includes(mins)) return mins;
+    }
+    return 10;
   }
 
   resetChat(): void {
