@@ -6,7 +6,7 @@ contextBridge.exposeInMainWorld('mindgateAPI', {
   evaluateRequest: (userInput: string) => ipcRenderer.invoke('evaluate-request', userInput),
   grantAccess: (index: number) => ipcRenderer.invoke('grant-access', index),
   getConfiguration: () => ipcRenderer.invoke('get-configuration'),
-  hideOrb: () => ipcRenderer.invoke('hide-orb'),
+  hideOverlay: () => ipcRenderer.invoke('hide-overlay'),
   closeDistraction: () => ipcRenderer.invoke('close-distraction'),
   showSettings: () => ipcRenderer.invoke('show-settings'),
   updateSettings: (settings: Partial<Configuration['settings']>) => ipcRenderer.invoke('update-settings', settings),
@@ -15,14 +15,6 @@ contextBridge.exposeInMainWorld('mindgateAPI', {
   requestAccessibilityPermission: () => ipcRenderer.invoke('request-accessibility-permission'),
   launchURL: (url: string) => ipcRenderer.invoke('launch-url', url),
   launchApp: (appName: string) => ipcRenderer.invoke('launch-app', appName),
-
-  onShowOrb: (callback: () => void) => {
-    ipcRenderer.on('show-orb', callback);
-  },
-
-  onHideOrb: (callback: () => void) => {
-    ipcRenderer.on('hide-orb', callback);
-  },
 
   onShowOverlay: (callback: () => void) => {
     ipcRenderer.on('show-overlay', callback);
@@ -44,7 +36,7 @@ declare global {
       evaluateRequest: (userInput: string) => Promise<{ isApproved: boolean; message: string }>;
       grantAccess: (index: number) => void;
       getConfiguration: () => Promise<Configuration>;
-      hideOrb: () => void;
+      hideOverlay: () => void;
       closeDistraction: () => void;
       showSettings: () => void;
       updateSettings: (settings: Partial<Configuration['settings']>) => void;
@@ -53,8 +45,6 @@ declare global {
       requestAccessibilityPermission: () => Promise<boolean>;
       launchURL: (url: string) => void;
       launchApp: (appName: string) => void;
-      onShowOrb: (callback: () => void) => void;
-      onHideOrb: (callback: () => void) => void;
       onShowOverlay: (callback: () => void) => void;
       onHideOverlay: (callback: () => void) => void;
       onOllamaStatusChanged: (callback: (connected: boolean) => void) => void;

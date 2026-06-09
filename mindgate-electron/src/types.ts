@@ -24,19 +24,16 @@ export interface UIThemeColors {
 }
 
 export interface UIThemeAnimation {
-  orbBreathingDuration: number;
-  orbTransitionDuration: number;
+  transitionDuration: number;
   overlayFadeDuration: number;
 }
 
 export interface UIThemeDimensions {
-  orbSize: number;
-  orbExpandedWidth: number;
-  orbExpandedHeight: number;
+  overlayWidth: number;
+  overlayHeight: number;
   chatCornerRadius: number;
-  orbXOffset: number;
-  orbYOffset: number;
-  orbDistractionOffset: number;
+  overlayXOffset: number;
+  overlayYOffset: number;
 }
 
 export interface Configuration {

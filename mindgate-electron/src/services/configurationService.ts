@@ -91,19 +91,16 @@ export class ConfigurationService {
           error: '#FF453A',
           warning: '#FF9F0A'
         },
-        animation: {
-          orbBreathingDuration: 3.0,
-          orbTransitionDuration: 0.3,
-          overlayFadeDuration: 0.5
+animation: {
+          transitionDuration: 0.3,
+          overlayFadeDuration: 0.3
         },
         dimensions: {
-          orbSize: 60,
-          orbExpandedWidth: 380,
-          orbExpandedHeight: 380,
-          chatCornerRadius: 180,
-          orbXOffset: 12,
-          orbYOffset: 12,
-          orbDistractionOffset: 50
+          overlayWidth: 380,
+          overlayHeight: 380,
+          chatCornerRadius: 28,
+          overlayXOffset: 24,
+          overlayYOffset: 24
         }
       }
     };

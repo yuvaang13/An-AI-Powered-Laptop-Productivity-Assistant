@@ -4,15 +4,13 @@ A futuristic, on-device AI productivity assistant that helps you stay focused by
 
 ## Features
 
-- **AI Orb Interface**: A futuristic, breathing AI orb with flowing line animations that appears when you visit distracting content
-- **Liquid Glass Transparency**: Frosted glass effect with CSS backdrop-filter
-- **UI Alive Visual Dynamics**: Hover-triggered glow intensification, breathing animations (0.8-1.2 scale), micro-interactions
+- **Liquid Glass Overlay**: A translucent, iOS 26-inspired frosted glass overlay appears when you visit distracting content, allowing immediate interaction with the local LLM
 - **Local AI Evaluation**: Uses Ollama with gemma3:1b running locally to evaluate your access requests
 - **Smart Access Control**: AI decides whether to grant access (with time limits) or block the distraction
 - **Seamless Integration**: Runs as a background agent without a Dock/taskbar icon
 - **Browser Monitoring**: Tracks Safari, Chrome, Firefox, Brave, and Edge for distracting keywords
 - **App Monitoring**: Detects when you switch to distracting applications
-- **Typing Effect**: Character-by-character reveal for AI responses
+- **Minimal Permissions**: Single accessibility permission required on macOS for window monitoring
 
 ## System Requirements
 
@@ -56,16 +54,15 @@ npm run dist
 ## Usage
 
 1. Launch MindGate - it runs in the background
-2. When you navigate to a distracting app or website, the AI Orb appears
-3. Click the Orb to expand the chat interface
-4. Type your justification for needing access
-5. The AI evaluates your request:
-   - **Approved**: Choose a duration (5/10/15 minutes) and continue
-   - **Denied**: The app/website is hidden and you're returned to work
+2. When you navigate to a distracting app or website, the Liquid Glass overlay appears immediately
+3. Type your justification for needing access in the overlay
+4. The AI evaluates your request:
+    - **Approved**: Choose a duration (5/10/15 minutes) and continue
+    - **Denied**: The app/website is hidden and you're returned to work
 
 ## Architecture
 
-- **WindowManager**: Manages Orb and Overlay BrowserWindows
+- **WindowManager**: Manages the Liquid Glass overlay BrowserWindow
 - **WorkspaceMonitor**: Tracks active application changes
 - **SystemMonitor**: Platform-specific window detection (macOS/Windows/Linux)
 - **OllamaService**: Handles local AI API communication
