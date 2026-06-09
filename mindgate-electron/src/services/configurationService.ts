@@ -51,22 +51,19 @@ export class ConfigurationService {
     return {
       settings: {
         distractingApps: [
-          'Discord', 'Slack', 'Twitter', 'TweetDeck', 'Telegram', 'Reddit',
-          'TikTok', 'Instagram', 'Threads', 'Facebook', 'Messenger',
+          'Twitter', 'TweetDeck', 'Reddit',
+          'TikTok', 'Instagram', 'Threads', 'Facebook',
           'Netflix', 'YouTube', 'Twitch', 'Hulu', 'Disney+', 'HBOMax',
-          'Spotify', 'Pandora', 'SoundCloud',
           'Snapchat', 'Pinterest', 'LinkedIn', 'Tumblr',
-          'WhatsApp', 'WeChat', 'Signal', 'GroupMe', 'Kik',
           'Tinder', 'Bumble', 'Hinge', 'Grindr',
           'Steam', 'Epic Games', 'Battle.net', 'Roblox', 'Minecraft',
-          'Discord', 'Twitch',
+          'Twitch',
           'Amazon', 'eBay', 'Etsy', 'Walmart', 'Target', 'Best Buy',
           'AliExpress', 'Temu', 'Shein', 'Wish',
-          'Photos', 'iPhoto', 'Photo Booth',
         ],
         restrictedKeywords: [
           // Social Media
-          'facebook', 'fb.com', 'fb.watch', 'messenger',
+          'facebook', 'fb.com', 'fb.watch',
           'twitter', 'x.com', 'tweetdeck', 'tweet',
           'instagram', 'threads.net',
           'tiktok',
@@ -100,12 +97,8 @@ export class ConfigurationService {
           'aliexpress', 'temu', 'shein', 'wish',
           'nike', 'adidas', 'zara', 'hm', 'sephora', 'ulta',
 
-          // Music
-          'spotify', 'pandora', 'soundcloud', 'deezer', 'tidal',
-
           // Gaming
           'steam', 'epic games', 'roblox',
-          'chess.com', 'lichess',
           'playstation', 'xbox', 'nintendo',
           'minecraft', 'fortnite', 'valorant', 'league of legends',
 

@@ -4,7 +4,7 @@ import type { SystemMonitor } from './platformWrapper.js';
 
 const DISTRACTING_DOMAINS: string[] = [
   // ── Social Media & Microblogging ──
-  'facebook.com', 'fb.com', 'fb.watch', 'messenger.com',
+  'facebook.com', 'fb.com', 'fb.watch',
   'twitter.com', 'x.com', 'tweetdeck.com',
   'instagram.com', 'threads.net',
   'tiktok.com',
@@ -99,17 +99,6 @@ const DISTRACTING_DOMAINS: string[] = [
   'grindr.com',
   'badoo.com',
 
-  // ── Messaging & Group Chats ──
-  'discord.com', 'discord.gg',
-  'telegram.org', 't.me',
-  'whatsapp.com',
-  'signal.org',
-  'wechat.com',
-  'line.me',
-  'kik.com',
-  'groupme.com',
-  'slack.com',  // work-related but can be distracting
-
   // ── Entertainment & Gossip ──
   'buzzfeed.com',
   'tmz.com',
@@ -130,8 +119,6 @@ const DISTRACTING_DOMAINS: string[] = [
   'roblox.com',
   'twitch.tv',
   'kick.com',
-  'chess.com',
-  'lichess.org',
   'pokemon.com',
   'nintendo.com',
   'playstation.com',
@@ -146,14 +133,6 @@ const DISTRACTING_DOMAINS: string[] = [
   'dota2.com',
   'fortnite.com',
   'amongus.com',
-
-  // ── Music Streaming ──
-  'spotify.com',
-  'pandora.com',
-  'soundcloud.com',
-  'deezer.com',
-  'tidal.com',
-  'apple.com/music',
 
   // ── News & Aggregators (Entertainment-focused) ──
   'buzzfeed.com',
@@ -198,7 +177,7 @@ const DISTRACTING_DOMAINS: string[] = [
 
 const TITLE_DISTRACTION_PATTERNS: RegExp[] = [
   // Social Media
-  /facebook|fb\s(messenger)?/i,
+  /facebook/i,
   /twitter|x\.com|tweet|retweet/i,
   /instagram|threads/i,
   /tiktok/i,
@@ -216,9 +195,6 @@ const TITLE_DISTRACTION_PATTERNS: RegExp[] = [
 
   // Twitch / Live Streaming
   /twitch|streamlabs|streamelements/i,
-
-  // Music Streaming
-  /spotify|soundcloud|pandora|deezer|tidal/i,
 
   // Shopping
   /amazon|ebay|etsy|walmart|target|best\s?buy/i,
@@ -239,7 +215,7 @@ const TITLE_DISTRACTION_PATTERNS: RegExp[] = [
 
   // Gaming
   /steam|epic\sgames|roblox/i,
-  /chess\.com|lichess|pokemon|nintendo/i,
+  /pokemon|nintendo/i,
   /playstation|xbox|battle\.net|blizzard/i,
   /minecraft|fortnite|valorant|league\sof\slegends/i,
   /gaming|game\s(over|play|on)|esports/i,
@@ -265,8 +241,6 @@ const TITLE_DISTRACTION_PATTERNS: RegExp[] = [
 
   // General Traps
   /trending|viral|watch\sthis/i,
-  /inbox|messaging|chat/i,
-  /discord|telegram|whatsapp|wechat|kik/i,
   /only\sfans|fan(sly)?/i,
 ];
 

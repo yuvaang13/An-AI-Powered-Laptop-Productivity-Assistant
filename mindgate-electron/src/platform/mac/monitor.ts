@@ -17,10 +17,7 @@ export class MacMonitor {
       return null;
     }
 
-    // Each piece is fetched independently so a failure in one doesn't
-    // break the whole detection.
-
-    // ── 1. Frontmost app name ──
+    // ── 1. Frontmost app name (works without Accessibility) ──
     let processName = 'unknown';
     try {
       const appScript = `tell application "System Events"
@@ -30,15 +27,34 @@ end tell`;
       const { stdout } = await execAsync(`osascript -e '${appScript}'`, { timeout: 5000 });
       processName = stdout.trim() || 'unknown';
     } catch {
-      // App name is essential — if this fails, we can't detect anything
       console.error('[MacMonitor] Failed to get frontmost app name');
       return null;
     }
 
-    // ── 2. Window title (via Accessibility API — AXTitle) ──
+    // ── 2. Window title ──
+    // Strategy A: tell the app directly (works without Accessibility for apps
+    //             that support AppleScript — Chrome, Safari, Firefox, etc.)
+    // Strategy B: AXTitle via System Events (needs Accessibility)
     let windowTitle = '';
     try {
       const titleScript = `tell application "System Events"
+  set frontApp to name of first application process whose frontmost is true
+end tell
+try
+  tell application frontApp
+    if (count of windows) > 0 then
+      set windowTitle to name of front window
+      return windowTitle
+    end if
+  end tell
+end try
+return ""`;
+      const { stdout } = await execAsync(`osascript -e '${titleScript}'`, { timeout: 5000 });
+      windowTitle = stdout.trim() || '';
+    } catch {
+      // Fallback to AXTitle
+      try {
+        const axScript = `tell application "System Events"
   set frontApp to first application process whose frontmost is true
   try
     set frontWindow to value of attribute "AXTitle" of front window of frontApp
@@ -47,13 +63,14 @@ end tell`;
     return ""
   end try
 end tell`;
-      const { stdout } = await execAsync(`osascript -e '${titleScript}'`, { timeout: 5000 });
-      windowTitle = stdout.trim() || '';
-    } catch {
-      // Title is optional
+        const { stdout } = await execAsync(`osascript -e '${axScript}'`, { timeout: 5000 });
+        windowTitle = stdout.trim() || '';
+      } catch {
+        // Title is optional
+      }
     }
 
-    // ── 3. Bundle ID ──
+    // ── 3. Bundle ID (needs Accessibility on some macOS versions) ──
     let bundleID = '';
     try {
       const bundleScript = `tell application "System Events"
@@ -99,7 +116,14 @@ end tell`;
     }
 
     // ── 5. Browser URL ──
-    const browserURL = bundleID ? (await this.getActiveBrowserURL(bundleID)) ?? undefined : undefined;
+    // Use bundle ID first, fall back to process name
+    let browserURL: string | undefined;
+    if (bundleID) {
+      browserURL = (await this.getActiveBrowserURL(bundleID)) ?? undefined;
+    }
+    if (!browserURL && processName !== 'unknown') {
+      browserURL = (await this.getActiveBrowserURL(processName)) ?? undefined;
+    }
 
     console.log(`[MacMonitor] Window: "${processName}" | Title: "${windowTitle}" | BundleID: "${bundleID}" | URL: "${browserURL || ''}"`);
 
@@ -112,15 +136,15 @@ end tell`;
     };
   }
 
-  async getActiveBrowserURL(bundleID: string): Promise<string | null> {
-    if (!bundleID) return null;
+  async getActiveBrowserURL(identifier: string): Promise<string | null> {
+    if (!identifier) return null;
 
     try {
-      const bid = bundleID.toLowerCase();
+      const id = identifier.toLowerCase();
       let script: string;
 
-      if (bid.includes('safari')) {
-        script = `tell application id "${bundleID}"
+      if (id.includes('safari')) {
+        script = `tell application id "${identifier}"
   try
     if (count of windows) is 0 then return ""
     set tabURL to URL of current tab of front window
@@ -130,8 +154,8 @@ end tell`;
     return ""
   end try
 end tell`;
-      } else if (bid.includes('chrome') || bid.includes('brave') || bid.includes('edge')) {
-        script = `tell application id "${bundleID}"
+      } else if (id.includes('chrome') || id.includes('brave') || id.includes('edge')) {
+        script = `tell application id "${identifier}"
   try
     if (count of windows) is 0 then return ""
     set frontTab to active tab of front window
@@ -141,8 +165,8 @@ end tell`;
     return ""
   end try
 end tell`;
-      } else if (bid.includes('firefox')) {
-        script = `tell application id "${bundleID}"
+      } else if (id.includes('firefox')) {
+        script = `tell application id "${identifier}"
   try
     if (count of windows) is 0 then return ""
     set windowTitle to name of front window
@@ -156,7 +180,7 @@ end tell`;
         return null;
       }
 
-      console.log(`[MacMonitor] Fetching URL for bundle: ${bundleID}`);
+      console.log(`[MacMonitor] Fetching URL for: ${identifier}`);
       const { stdout } = await execAsync(`osascript -e '${script}'`, { timeout: 3000 });
       const result = stdout.trim();
       console.log(`[MacMonitor] URL fetch result: "${result}"`);
@@ -168,19 +192,19 @@ end tell`;
     }
   }
 
-  async closeBrowserTab(bundleID: string): Promise<boolean> {
-    if (!bundleID) return false;
+  async closeBrowserTab(identifier: string): Promise<boolean> {
+    if (!identifier) return false;
 
     try {
-      const bid = bundleID.toLowerCase();
+      const id = identifier.toLowerCase();
       let script: string;
 
-      if (bid.includes('chrome') || bid.includes('brave') || bid.includes('edge')) {
-        script = `tell application id "${bundleID}" to close active tab of front window`;
-      } else if (bid.includes('safari')) {
-        script = `tell application id "${bundleID}" to close current tab of front window`;
-      } else if (bid.includes('firefox')) {
-        script = `tell application id "${bundleID}" to close front window`;
+      if (id.includes('chrome') || id.includes('brave') || id.includes('edge')) {
+        script = `tell application id "${identifier}" to close active tab of front window`;
+      } else if (id.includes('safari')) {
+        script = `tell application id "${identifier}" to close current tab of front window`;
+      } else if (id.includes('firefox')) {
+        script = `tell application id "${identifier}" to close front window`;
       } else {
         return false;
       }
