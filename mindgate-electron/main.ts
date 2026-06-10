@@ -71,6 +71,18 @@ async function initialize() {
     tray?.setTitle('⚠️');
     tray?.setToolTip('MindGate - Ollama not connected. Please start Ollama.');
   }
+
+  // Forced startup test: show overlay for 2 seconds to verify renderer works
+  setTimeout(() => {
+    console.log('[Main] Forced overlay test — showing overlay for 2s');
+    windowManager.showOverlay();
+    overlayWindow?.webContents.send('show-overlay');
+    setTimeout(() => {
+      console.log('[Main] Forced overlay test — hiding overlay');
+      windowManager.hideOverlay();
+      overlayWindow?.webContents.send('hide-overlay');
+    }, 2000);
+  }, 3000);
 }
 
 async function createWindows(): Promise<void> {

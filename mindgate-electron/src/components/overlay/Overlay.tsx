@@ -41,18 +41,17 @@ export const LiquidGlassOverlay: React.FC<OverlayProps> = ({ visible, configurat
       setRemainingAccessTime(null);
       setIsInputDisabled(false);
       setCountdownSeconds(configuration.settings.justificationCountdownDuration);
-      initChat();
+      initChat().catch(e => {
+        console.error('[Overlay] initChat failed:', e);
+        setMessages([{ role: 'ai', content: 'Error starting chat. Please restart MindGate.', timestamp: Date.now() }]);
+      });
     }
   }, [visible]);
 
   const initChat = async () => {
-    try {
-      window.mindgateAPI.resetChat();
-      const firstMessage = await window.mindgateAPI.generateFirstMessage();
-      setMessages([{ role: 'ai', content: firstMessage, timestamp: Date.now() }]);
-    } catch {
-      setMessages([{ role: 'ai', content: 'MindGate AI is not connected. Please start Ollama.', timestamp: Date.now() }]);
-    }
+    window.mindgateAPI.resetChat();
+    const firstMessage = await window.mindgateAPI.generateFirstMessage();
+    setMessages([{ role: 'ai', content: firstMessage, timestamp: Date.now() }]);
   };
 
   useEffect(() => {
@@ -143,11 +142,15 @@ export const LiquidGlassOverlay: React.FC<OverlayProps> = ({ visible, configurat
         padding: '4px 2px',
         minHeight: 0,
       }}>
-        {messages.map((msg, i) => (
-          <div key={i} className={msg.role === 'user' ? 'glass-bubble-user' : 'glass-bubble-ai'}>
-            {msg.content}
+        {messages && messages.length > 0 ? messages.map((msg, i) => (
+          <div key={i} className={msg?.role === 'user' ? 'glass-bubble-user' : 'glass-bubble-ai'}>
+            {msg?.content ?? ''}
           </div>
-        ))}
+        )) : (
+          <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', textAlign: 'center', padding: '20px' }}>
+            Loading...
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
 
