@@ -10,6 +10,24 @@ import { WindowManager } from './src/services/windowManager.js';
 import { SystemMonitor } from './src/services/platformWrapper.js';
 import type { ActiveWindowInfo, Configuration } from './src/types.js';
 
+function patchConsole() {
+  const c = console as unknown as Record<string, (...args: unknown[]) => void>;
+  for (const method of ['log', 'error', 'warn', 'info']) {
+    const original = c[method];
+    c[method] = function (...args: unknown[]) {
+      try {
+        original.apply(console, args);
+      } catch (e: unknown) {
+        const err = e as NodeJS.ErrnoException;
+        if (err?.code !== 'EIO') {
+          throw e;
+        }
+      }
+    };
+  }
+}
+patchConsole();
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 let configurationService: ConfigurationService;

@@ -28,12 +28,10 @@
 .glass-panel {
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.72) 0%,
-    rgba(255, 255, 255, 0.56) 50%,
-    rgba(255, 255, 255, 0.48) 100%
+    rgba(255, 255, 255, 0.82) 0%,
+    rgba(255, 255, 255, 0.66) 50%,
+    rgba(255, 255, 255, 0.58) 100%
   );
-  backdrop-filter: blur(var(--blur-amount));
-  -webkit-backdrop-filter: blur(var(--blur-amount));
   border: 1px solid var(--glass-border);
   border-radius: var(--glass-radius-xl);
   box-shadow: var(--glass-shadow-heavy);
@@ -46,8 +44,6 @@
     rgba(30, 30, 34, 0.78) 50%,
     rgba(20, 20, 24, 0.72) 100%
   );
-  backdrop-filter: blur(var(--blur-amount));
-  -webkit-backdrop-filter: blur(var(--blur-amount));
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--glass-radius-xl);
   box-shadow: var(--glass-shadow-heavy);
@@ -60,8 +56,6 @@
     rgba(64, 64, 70, 0.5) 0%,
     rgba(44, 44, 50, 0.4) 100%
   );
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--glass-radius-md);
   border-bottom-left-radius: 4px;
@@ -79,8 +73,6 @@
     rgba(230, 230, 235, 0.7) 0%,
     rgba(210, 210, 218, 0.5) 100%
   );
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
   border-radius: var(--glass-radius-md);
   border-bottom-left-radius: 4px;
@@ -98,8 +90,6 @@
     rgba(0, 122, 255, 0.7) 0%,
     rgba(0, 100, 220, 0.6) 100%
   );
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: var(--glass-radius-md);
   border-bottom-right-radius: 4px;
@@ -113,8 +103,6 @@
 
 .glass-input {
   background: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border-heavy);
   border-radius: var(--glass-radius-md);
   color: var(--glass-text);
@@ -136,8 +124,6 @@
 
 .glass-btn {
   background: rgba(0, 122, 255, 0.75);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
   border: none;
   border-radius: var(--glass-radius-sm);
   color: white;
@@ -163,8 +149,6 @@
 
 .glass-btn-secondary {
   background: rgba(120, 120, 128, 0.2);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(60, 60, 67, 0.12);
   border-radius: var(--glass-radius-sm);
   color: var(--glass-blue);

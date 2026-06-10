@@ -59,18 +59,25 @@ export class WindowManager {
     return this.overlayWindow;
   }
 
-  showOverlay(_targetWindow?: ActiveWindowInfo) {
-    const primaryDisplay = screen.getPrimaryDisplay();
-    const { bounds } = primaryDisplay;
+  showOverlay(targetWindow?: ActiveWindowInfo) {
+    const window = targetWindow ?? this.targetApp;
     const width = this.configuration.theme.dimensions.overlayWidth ?? 340;
     const height = this.configuration.theme.dimensions.overlayHeight ?? 340;
     const xOffset = this.configuration.theme.dimensions.overlayXOffset ?? 24;
     const yOffset = this.configuration.theme.dimensions.overlayYOffset ?? 24;
 
-    this.overlayWindow?.setPosition(
-      Math.round(bounds.x + bounds.width - width - xOffset),
-      Math.round(bounds.y + yOffset)
-    );
+    if (window?.frame && window.frame.width > 0) {
+      this.overlayWindow?.setPosition(
+        Math.round((window.frame.x ?? 0) + xOffset),
+        Math.round((window.frame.y ?? 0) + yOffset)
+      );
+    } else {
+      const primaryDisplay = screen.getPrimaryDisplay();
+      this.overlayWindow?.setPosition(
+        Math.round(primaryDisplay.bounds.x + (primaryDisplay.bounds.width - width) / 2),
+        Math.round(primaryDisplay.bounds.y + (primaryDisplay.bounds.height - height) / 2)
+      );
+    }
 
     this.overlayWindow?.setSize(width, height);
     this.overlayWindow?.show();
