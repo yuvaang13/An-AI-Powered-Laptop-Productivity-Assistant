@@ -30,12 +30,14 @@ export class WindowManager {
   createOverlayWindow(): BrowserWindow {
     const primaryDisplay = screen.getPrimaryDisplay();
     const { bounds } = primaryDisplay;
+    const xOffset = this.configuration.theme.dimensions.overlayXOffset ?? 24;
+    const yOffset = this.configuration.theme.dimensions.overlayYOffset ?? 24;
 
     this.overlayWindow = new BrowserWindow({
-      x: Math.round(bounds.x + this.configuration.theme.dimensions.overlayXOffset),
-      y: Math.round(bounds.y + this.configuration.theme.dimensions.overlayYOffset),
-      width: this.configuration.theme.dimensions.overlayWidth,
-      height: this.configuration.theme.dimensions.overlayHeight,
+      x: Math.round(bounds.x + xOffset),
+      y: Math.round(bounds.y + yOffset),
+      width: this.configuration.theme.dimensions.overlayWidth ?? 380,
+      height: this.configuration.theme.dimensions.overlayHeight ?? 380,
       transparent: true,
       frame: false,
       alwaysOnTop: true,
@@ -59,17 +61,19 @@ export class WindowManager {
 
   showOverlay(targetWindow?: ActiveWindowInfo) {
     const window = targetWindow ?? this.targetApp;
+    const xOffset = this.configuration.theme.dimensions.overlayXOffset ?? 24;
+    const yOffset = this.configuration.theme.dimensions.overlayYOffset ?? 24;
     
     if (window && window.frame && window.frame.width > 0) {
       this.overlayWindow?.setPosition(
-        Math.round(window.frame.x + this.configuration.theme.dimensions.overlayXOffset),
-        Math.round(window.frame.y + this.configuration.theme.dimensions.overlayYOffset)
+        Math.round((window.frame.x ?? 0) + xOffset),
+        Math.round((window.frame.y ?? 0) + yOffset)
       );
     } else {
       const primaryDisplay = screen.getPrimaryDisplay();
       this.overlayWindow?.setPosition(
-        Math.round(primaryDisplay.bounds.x + this.configuration.theme.dimensions.overlayXOffset),
-        Math.round(primaryDisplay.bounds.y + this.configuration.theme.dimensions.overlayYOffset)
+        Math.round(primaryDisplay.bounds.x + xOffset),
+        Math.round(primaryDisplay.bounds.y + yOffset)
       );
     }
 

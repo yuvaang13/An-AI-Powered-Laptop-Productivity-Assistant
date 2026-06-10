@@ -41,8 +41,9 @@ export class ConfigurationService {
         ...loaded.settings
       },
       theme: {
-        ...defaults.theme,
-        ...loaded.theme
+        colors: { ...defaults.theme.colors, ...loaded.theme?.colors },
+        animation: { ...defaults.theme.animation, ...loaded.theme?.animation },
+        dimensions: { ...defaults.theme.dimensions, ...loaded.theme?.dimensions }
       }
     };
   }

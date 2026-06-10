@@ -21,7 +21,7 @@ let tray: Tray | null = null;
 let overlayWindow: BrowserWindow | null = null;
 
 let isOllamaConnected: boolean = false;
-let hasRequestedPermissions: boolean = true;
+let hasRequestedPermissions: boolean = false;
 
 async function checkAccessibilityPermissions(): Promise<boolean> {
   if (process.platform !== 'darwin') return true;
@@ -71,18 +71,6 @@ async function initialize() {
     tray?.setTitle('⚠️');
     tray?.setToolTip('MindGate - Ollama not connected. Please start Ollama.');
   }
-
-  // Forced startup test: show overlay for 2 seconds to verify renderer works
-  setTimeout(() => {
-    console.log('[Main] Forced overlay test — showing overlay for 2s');
-    windowManager.showOverlay();
-    overlayWindow?.webContents.send('show-overlay');
-    setTimeout(() => {
-      console.log('[Main] Forced overlay test — hiding overlay');
-      windowManager.hideOverlay();
-      overlayWindow?.webContents.send('hide-overlay');
-    }, 2000);
-  }, 3000);
 }
 
 async function createWindows(): Promise<void> {
@@ -276,9 +264,9 @@ function setupEventHandlers() {
     
     if (!hasRequestedPermissions) {
       const hasPermission = await requestAccessibilityPermissionsIfNeeded();
+      hasRequestedPermissions = true;
       if (!hasPermission) {
-        console.log('Accessibility permission required - prompting user');
-        return;
+        console.log('Accessibility permission not granted — proceeding without AX API');
       }
     }
     
