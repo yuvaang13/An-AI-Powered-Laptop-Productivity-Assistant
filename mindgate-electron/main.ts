@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Tray, screen, Menu, nativeImage, systemPreferences } from 'electron';
+import { app, BrowserWindow, ipcMain, Tray, screen, Menu, nativeImage, systemPreferences, shell } from 'electron';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { writeFileSync, mkdtempSync } from 'node:fs';
@@ -245,17 +245,24 @@ function setupIPC() {
     return decisionEngine.getRemainingTime();
   });
 
-  ipcMain.handle('launch-url', (_event, url: string) => {
-    require('electron').shell.openExternal(url);
+  ipcMain.handle('launch-url', async (_event, url: string) => {
+    try {
+      await shell.openExternal(url);
+    } catch (err) {
+      console.error('Failed to open URL:', err);
+    }
   });
 
-  ipcMain.handle('launch-app', (_event, appName: string) => {
-    const { shell } = require('electron');
-    const appPath = join('/Applications', `${appName}.app`);
-    shell.openPath(appPath).catch((err: unknown) => {
+  ipcMain.handle('launch-app', async (_event, appName: string) => {
+    try {
+      const appPath = join('/Applications', `${appName}.app`);
+      await shell.openPath(appPath);
+    } catch (err) {
       console.error('Failed to launch app:', err);
-      shell.openExternal('https://www.google.com');
-    });
+      try {
+        await shell.openExternal('https://www.google.com');
+      } catch {}
+    }
   });
 
   setInterval(async () => {
