@@ -67,21 +67,22 @@ export class WindowManager {
     const yOffset = this.configuration.theme.dimensions.overlayYOffset ?? 24;
 
     if (window?.frame && window.frame.width > 0) {
-      this.overlayWindow?.setPosition(
-        Math.round((window.frame.x ?? 0) + xOffset),
-        Math.round((window.frame.y ?? 0) + yOffset)
-      );
+      const x = Math.round((window.frame.x ?? 0) + xOffset);
+      const y = Math.round((window.frame.y ?? 0) + yOffset);
+      console.log(`[WindowManager] Positioning overlay at distraction window (${x},${y}) size ${width}x${height}`);
+      this.overlayWindow?.setPosition(x, y);
     } else {
       const primaryDisplay = screen.getPrimaryDisplay();
-      this.overlayWindow?.setPosition(
-        Math.round(primaryDisplay.bounds.x + (primaryDisplay.bounds.width - width) / 2),
-        Math.round(primaryDisplay.bounds.y + (primaryDisplay.bounds.height - height) / 2)
-      );
+      const x = Math.round(primaryDisplay.bounds.x + (primaryDisplay.bounds.width - width) / 2);
+      const y = Math.round(primaryDisplay.bounds.y + (primaryDisplay.bounds.height - height) / 2);
+      console.log(`[WindowManager] Positioning overlay centered (${x},${y}) size ${width}x${height}`);
+      this.overlayWindow?.setPosition(x, y);
     }
 
     this.overlayWindow?.setSize(width, height);
     this.overlayWindow?.show();
     this.overlayWindow?.focus();
+    console.log('[WindowManager] Overlay shown, visible:', this.overlayWindow?.isVisible(), 'position:', this.overlayWindow?.getPosition());
   }
 
   hideOverlay() {

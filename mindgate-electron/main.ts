@@ -264,6 +264,18 @@ function setupIPC() {
     return decisionEngine.getRemainingTime();
   });
 
+  ipcMain.handle('debug-show-overlay', async () => {
+    console.log('[Main] Debug: manually showing overlay');
+    windowManager.showOverlay();
+    if (overlayWindow && !overlayWindow.isDestroyed()) {
+      const [x, y] = overlayWindow.getPosition();
+      const [w, h] = overlayWindow.getSize();
+      console.log(`[Main] Debug: overlay at (${x},${y}) size ${w}x${h}, visible: ${overlayWindow.isVisible()}`);
+      overlayWindow.webContents.send('show-overlay');
+    }
+    return true;
+  });
+
   ipcMain.handle('launch-url', async (_event, url: string) => {
     try {
       await shell.openExternal(url);
