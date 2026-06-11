@@ -183,8 +183,8 @@ animation: {
           overlayFadeDuration: 0.3
         },
         dimensions: {
-          overlayWidth: 340,
-          overlayHeight: 340,
+          overlayWidth: 280,
+          overlayHeight: 280,
           chatCornerRadius: 24,
           overlayXOffset: 24,
           overlayYOffset: 24

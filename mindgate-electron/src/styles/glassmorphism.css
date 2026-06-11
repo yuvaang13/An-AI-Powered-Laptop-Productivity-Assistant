@@ -1,9 +1,9 @@
 :root {
-  --glass-primary: rgba(255, 255, 255, 0.95);
-  --glass-secondary: rgba(255, 255, 255, 0.88);
-  --glass-accent: rgba(255, 255, 255, 0.7);
-  --glass-surface: rgba(255, 255, 255, 0.15);
-  --glass-surface-light: rgba(255, 255, 255, 0.08);
+  --glass-primary: rgba(245, 247, 255, 0.92);
+  --glass-secondary: rgba(235, 240, 255, 0.85);
+  --glass-accent: rgba(220, 230, 255, 0.7);
+  --glass-surface: rgba(200, 215, 255, 0.1);
+  --glass-surface-light: rgba(200, 215, 255, 0.05);
   --glass-text: #1c1c1e;
   --glass-text-secondary: #8e8e93;
   --glass-text-inverse: #ffffff;
@@ -11,31 +11,47 @@
   --glass-warning: #ff9f0a;
   --glass-success: #34c759;
   --glass-blue: #007aff;
-  --blur-amount: 40px;
-  --glass-border: rgba(255, 255, 255, 0.25);
-  --glass-border-heavy: rgba(60, 60, 67, 0.12);
+  --glass-tint-color: rgba(120, 160, 255, 0.06);
+  --glass-border: rgba(255, 255, 255, 0.5);
+  --glass-border-heavy: rgba(60, 60, 80, 0.1);
   --glass-radius-sm: 10px;
-  --glass-radius-md: 18px;
+  --glass-radius-md: 16px;
   --glass-radius-lg: 22px;
   --glass-radius-xl: 28px;
-  --glass-shadow: 0 8px 40px rgba(0, 0, 0, 0.12), 0 2px 10px rgba(0, 0, 0, 0.06);
-  --glass-shadow-heavy: 0 20px 60px rgba(0, 0, 0, 0.15), 0 4px 16px rgba(0, 0, 0, 0.08);
-  --glass-gradient-start: rgba(255, 255, 255, 0.35);
-  --glass-gradient-end: rgba(255, 255, 255, 0.08);
-  --glass-tint: rgba(255, 255, 255, 0.05);
+  --glass-shadow: 0 4px 24px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
+  --glass-shadow-heavy: 0 20px 60px rgba(0, 0, 0, 0.12), 0 8px 24px rgba(0, 0, 0, 0.08);
+  --glass-gradient-start: rgba(255, 255, 255, 0.4);
+  --glass-gradient-end: rgba(255, 255, 255, 0.1);
 }
 
 .glass-panel {
-  background: #ffffff;
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 1) 0%,
-    rgba(255, 255, 255, 0.98) 50%,
-    rgba(248, 248, 250, 0.95) 100%
+    rgba(255, 255, 255, 0.98) 0%,
+    rgba(245, 248, 255, 0.95) 40%,
+    rgba(238, 242, 255, 0.92) 100%
   );
-  border: 1px solid rgba(60, 60, 67, 0.12);
+  border: 1.5px solid rgba(255, 255, 255, 0.6);
   border-radius: var(--glass-radius-xl);
-  box-shadow: var(--glass-shadow-heavy), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.12),
+    0 8px 24px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 rgba(120, 160, 255, 0.06);
+  position: relative;
+}
+
+.glass-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    180deg,
+    rgba(200, 220, 255, 0.08) 0%,
+    transparent 60%
+  );
+  pointer-events: none;
 }
 
 .glass-panel-dark {
@@ -71,10 +87,10 @@
 .glass-bubble-ai-light {
   background: linear-gradient(
     135deg,
-    rgba(230, 230, 235, 0.7) 0%,
-    rgba(210, 210, 218, 0.5) 100%
+    rgba(240, 243, 255, 0.85) 0%,
+    rgba(228, 232, 250, 0.7) 100%
   );
-  border: 1px solid var(--glass-border);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: var(--glass-radius-md);
   border-bottom-left-radius: 4px;
   color: var(--glass-text);
@@ -88,10 +104,10 @@
 .glass-bubble-user {
   background: linear-gradient(
     135deg,
-    rgba(0, 122, 255, 0.7) 0%,
-    rgba(0, 100, 220, 0.6) 100%
+    rgba(0, 122, 255, 0.8) 0%,
+    rgba(0, 90, 220, 0.7) 100%
   );
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: var(--glass-radius-md);
   border-bottom-right-radius: 4px;
   color: var(--glass-text-inverse);
@@ -103,8 +119,8 @@
 }
 
 .glass-input {
-  background: rgba(255, 255, 255, 0.65);
-  border: 1px solid var(--glass-border-heavy);
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(60, 60, 80, 0.1);
   border-radius: var(--glass-radius-md);
   color: var(--glass-text);
   font-size: 14px;
@@ -116,7 +132,7 @@
 
 .glass-input:focus {
   border-color: var(--glass-blue);
-  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.12);
 }
 
 .glass-input::placeholder {
@@ -124,7 +140,7 @@
 }
 
 .glass-btn {
-  background: rgba(0, 122, 255, 0.75);
+  background: rgba(0, 122, 255, 0.8);
   border: none;
   border-radius: var(--glass-radius-sm);
   color: white;
@@ -133,6 +149,7 @@
   padding: 10px 20px;
   cursor: pointer;
   transition: opacity 0.2s ease, transform 0.1s ease;
+  box-shadow: 0 1px 4px rgba(0, 122, 255, 0.2);
 }
 
 .glass-btn:hover {

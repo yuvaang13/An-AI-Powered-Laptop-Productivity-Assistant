@@ -18,7 +18,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
     if (this.state.hasError) {
       return (
         <div style={{
-          position: 'fixed', top: 0, left: 0, width: '340px', height: '340px',
+          position: 'fixed', top: 0, left: 0, width: '280px', height: '280px',
           background: 'rgba(255,255,255,0.9)', borderRadius: '24px',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: '#1c1c1e', fontSize: '14px', padding: '20px', textAlign: 'center',
@@ -48,7 +48,7 @@ const defaultConfig: Configuration = {
   theme: {
     colors: { primary: '#FFF', secondary: '#FFFFFFB3', accent: '#FFFFFF99', background: '#000', surface: '#000', text: '#FFF', textSecondary: '#FFFFFFB3', error: '#FF453A', warning: '#FF9F0A' },
     animation: { transitionDuration: 0.3, overlayFadeDuration: 0.3 },
-    dimensions: { overlayWidth: 340, overlayHeight: 340, chatCornerRadius: 24, overlayXOffset: 24, overlayYOffset: 24 },
+    dimensions: { overlayWidth: 280, overlayHeight: 280, chatCornerRadius: 24, overlayXOffset: 24, overlayYOffset: 24 },
   },
 };
 

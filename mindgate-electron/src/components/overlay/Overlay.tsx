@@ -247,9 +247,9 @@ export const LiquidGlassOverlay: React.FC<OverlayProps> = ({ visible, configurat
         gap: '10px',
         top: 0,
         left: 0,
-        width: '340px',
-        height: '340px',
-        padding: '20px',
+        width: '280px',
+        height: '280px',
+        padding: '18px',
         pointerEvents: 'auto',
         zIndex: 2147483647,
       }}

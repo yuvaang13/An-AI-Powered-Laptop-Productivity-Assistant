@@ -36,8 +36,8 @@ export class WindowManager {
     this.overlayWindow = new BrowserWindow({
       x: Math.round(bounds.x + xOffset),
       y: Math.round(bounds.y + yOffset),
-      width: this.configuration.theme.dimensions.overlayWidth ?? 380,
-      height: this.configuration.theme.dimensions.overlayHeight ?? 380,
+      width: this.configuration.theme.dimensions.overlayWidth ?? 280,
+      height: this.configuration.theme.dimensions.overlayHeight ?? 280,
       transparent: false,
       backgroundColor: '#ffffff',
       frame: false,
@@ -62,8 +62,8 @@ export class WindowManager {
 
   showOverlay(targetWindow?: ActiveWindowInfo) {
     const window = targetWindow ?? this.targetApp;
-    const width = this.configuration.theme.dimensions.overlayWidth ?? 340;
-    const height = this.configuration.theme.dimensions.overlayHeight ?? 340;
+    const width = this.configuration.theme.dimensions.overlayWidth ?? 280;
+    const height = this.configuration.theme.dimensions.overlayHeight ?? 280;
     const xOffset = this.configuration.theme.dimensions.overlayXOffset ?? 24;
     const yOffset = this.configuration.theme.dimensions.overlayYOffset ?? 24;
     const primaryDisplay = screen.getPrimaryDisplay();
@@ -75,9 +75,9 @@ export class WindowManager {
       y = Math.round((window.frame.y ?? 0) + yOffset);
       console.log(`[WindowManager] Positioning overlay at distraction window (${x},${y}) size ${width}x${height}`);
     } else {
-      x = Math.round(viewBounds.x + (viewBounds.width - width) / 2);
-      y = Math.round(viewBounds.y + (viewBounds.height - height) / 2);
-      console.log(`[WindowManager] Positioning overlay centered (${x},${y}) size ${width}x${height}`);
+      x = Math.round(viewBounds.x + xOffset);
+      y = Math.round(viewBounds.y + yOffset);
+      console.log(`[WindowManager] Positioning overlay top-left (${x},${y}) size ${width}x${height}`);
     }
 
     x = Math.max(viewBounds.x, Math.min(x, viewBounds.x + viewBounds.width - width));
