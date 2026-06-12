@@ -101,6 +101,20 @@ if ($process) {
     }
   }
 
+  async getActiveBrowserURL(_exeName: string): Promise<string | null> {
+    try {
+      const script = `
+Add-Type -AssemblyName System.Windows.Forms
+[System.Windows.Forms.SendKeys]::SendWait("^{F3}")
+`;
+      await runPowerShell(script, 3000);
+      return null;
+    } catch (error) {
+      console.error('Failed to get browser URL:', error);
+      return null;
+    }
+  }
+
   async closeBrowserTab(): Promise<boolean> {
     try {
       await runPowerShell(`
@@ -135,37 +149,5 @@ $hwnd = [Win32]::GetForegroundWindow()
     }
   }
 
-  async getActiveBrowserURL(exeName: string): Promise<string | null> {
-    if (!exeName) return null;
-
-    try {
-      const processName = exeName.toLowerCase().replace(/\.exe$/i, '');
-      const script = `
-$process = Get-Process -Name "${processName}" -ErrorAction SilentlyContinue |
-  Where-Object { $_.MainWindowHandle -ne 0 } |
-  Sort-Object -Property StartTime -Descending |
-  Select-Object -First 1
-if (-not $process -or -not $process.MainWindowTitle) { return }
-$title = $process.MainWindowTitle
-if ($title -match '(https?://[^\\s]+)') {
-  Write-Output $Matches[1]
-  return
-}
-if ($title -match '(www\\.[^\\s]+)') {
-  Write-Output ("https://" + $Matches[1])
-  return
-}
-if ($title -match ' - (Google Chrome|Microsoft Edge|Brave|Firefox|Opera)$') {
-  $site = $title -replace ' - (Google Chrome|Microsoft Edge|Brave|Firefox|Opera)$', ''
-  if ($site -match '\\.') { Write-Output ("https://" + $site) }
-}
-`;
-      const url = await runPowerShell(script, 3000);
-      return url || null;
-    } catch (error) {
-      console.error('Failed to get browser URL:', error);
-      return null;
-    }
   }
 
-}
