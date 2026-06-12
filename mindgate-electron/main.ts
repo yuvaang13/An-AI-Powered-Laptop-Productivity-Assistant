@@ -1,7 +1,7 @@
-import { app, BrowserWindow, ipcMain, Tray, screen, Menu, nativeImage, systemPreferences, shell, protocol, net } from 'electron';
+import { app, BrowserWindow, ipcMain, Tray, screen, Menu, nativeImage, systemPreferences, shell } from 'electron';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { writeFileSync, mkdtempSync } from 'node:fs';
+import { appendFileSync, writeFileSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { ConfigurationService } from './src/services/configurationService.js';
 import { DecisionEngine } from './src/services/decisionEngine.js';
@@ -10,9 +10,13 @@ import { WindowManager } from './src/services/windowManager.js';
 import { SystemMonitor } from './src/services/platformWrapper.js';
 import type { ActiveWindowInfo, Configuration } from './src/types.js';
 
-protocol.registerSchemesAsPrivileged([
-  { scheme: 'app', privileges: { standard: true, secure: true, supportFetchAPI: true } }
-]);
+const logPath = join(tmpdir(), 'mindgate-debug.log');
+function dbg(...args: unknown[]) {
+  const msg = `[${new Date().toISOString()}] ${args.map(a => String(a)).join(' ')}\n`;
+  try { appendFileSync(logPath, msg); } catch {}
+  console.log(...args);
+}
+dbg('MindGate starting, logPath:', logPath);
 
 for (const stream of [process.stdout, process.stderr]) {
   stream.on('error', (err: NodeJS.ErrnoException) => {
@@ -80,6 +84,7 @@ async function requestAccessibilityPermissionsIfNeeded(): Promise<boolean> {
 }
 
 async function initialize() {
+  dbg('initialize() started');
   configurationService = new ConfigurationService();
 
   systemMonitor = new SystemMonitor();
@@ -137,7 +142,8 @@ async function createWindows(): Promise<void> {
     webPreferences: {
       preload: join(__dirname, 'preload.js'),
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      webSecurity: false
     }
   });
 
@@ -154,21 +160,11 @@ async function createWindows(): Promise<void> {
     setTimeout(() => reject(new Error('Overlay window load timed out after 15s')), 15000);
   });
 
-  console.log('Registering app:// protocol handler for production');
-  if (!process.env.VITE_DEV_SERVER_URL) {
-    protocol.handle('app', (request) => {
-      const reqPath = request.url.slice('app://'.length);
-      const filePath = join(__dirname, 'dist', reqPath || 'index.html');
-      console.log('[Protocol] Serving:', filePath);
-      return net.fetch('file://' + filePath);
-    });
-  }
-
-  console.log('Loading overlay window with VITE_DEV_SERVER_URL:', process.env.VITE_DEV_SERVER_URL);
+  dbg('Loading overlay window, VITE_DEV_SERVER_URL:', process.env.VITE_DEV_SERVER_URL);
   if (process.env.VITE_DEV_SERVER_URL) {
     overlayWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
   } else {
-    overlayWindow.loadURL('app://index.html');
+    overlayWindow.loadFile(join(__dirname, 'dist/index.html'));
   }
 
   try {
@@ -341,7 +337,8 @@ function setupIPC() {
 function setupEventHandlers() {
   workspaceMonitor.onDistractionDetected = async (activeWindow: ActiveWindowInfo) => {
     try {
-      console.log('Distraction detected:', activeWindow.processName, activeWindow.windowTitle);
+      dbg('Distraction detected:', activeWindow.processName, activeWindow.windowTitle);
+      dbg('overlayWindow exists:', !!overlayWindow, 'destroyed:', overlayWindow?.isDestroyed(), 'visible:', overlayWindow?.isVisible());
       decisionEngine.setCurrentApp(activeWindow);
       windowManager.setTargetWindow(activeWindow);
 
