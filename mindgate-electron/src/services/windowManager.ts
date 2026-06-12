@@ -60,7 +60,7 @@ export class WindowManager {
     return this.overlayWindow;
   }
 
-  showOverlay(_targetWindow?: ActiveWindowInfo) {
+  showOverlay() {
     const width = this.configuration.theme.dimensions.overlayWidth ?? 280;
     const height = this.configuration.theme.dimensions.overlayHeight ?? 280;
     const xOffset = this.configuration.theme.dimensions.overlayXOffset ?? 24;

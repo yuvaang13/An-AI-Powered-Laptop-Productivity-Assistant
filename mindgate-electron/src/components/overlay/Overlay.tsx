@@ -61,11 +61,7 @@ export const LiquidGlassOverlay: React.FC<OverlayProps> = ({ visible, configurat
       setChatError(null);
       setIsRetrying(false);
       setCountdownSeconds(configuration.settings.justificationCountdownDuration);
-      initChat().catch(e => {
-        console.error('[Overlay] initChat failed:', e);
-        const errorMsg = e instanceof Error ? e.message : 'Unknown error';
-        setChatError(`Failed to start AI chat: ${errorMsg}. Click Retry to try again.`);
-      });
+      initChat();
     }
   }, [visible]);
 
@@ -73,8 +69,20 @@ export const LiquidGlassOverlay: React.FC<OverlayProps> = ({ visible, configurat
     console.log('[Overlay] initChat — starting');
     window.mindgateAPI.resetChat();
     console.log('[Overlay] initChat — calling generateFirstMessage');
-    const firstMessage = await window.mindgateAPI.generateFirstMessage();
-    console.log('[Overlay] initChat — generateFirstMessage returned:', firstMessage.slice(0, 80));
+    let firstMessage = '';
+    try {
+      const timeoutPromise = new Promise<string>((_, reject) => {
+        setTimeout(() => reject(new Error('AI response timed out after 5s')), 5000);
+      });
+      firstMessage = await Promise.race([
+        window.mindgateAPI.generateFirstMessage(),
+        timeoutPromise
+      ]);
+      console.log('[Overlay] initChat — generateFirstMessage returned:', firstMessage.slice(0, 80));
+    } catch (e) {
+      console.warn('[Overlay] initChat — using fallback message, error:', e);
+      firstMessage = "I see you're trying to access a distracting website. Why do you need to be here?";
+    }
     setMessages([{ role: 'ai', content: firstMessage, timestamp: Date.now() }]);
     setAiReady(true);
     console.log('[Overlay] initChat — done, aiReady=true');
@@ -165,14 +173,22 @@ export const LiquidGlassOverlay: React.FC<OverlayProps> = ({ visible, configurat
   if (!visible) return null;
 
   const renderChat = () => (
-    <>
+    <div style={{
+      flex: 1,
+      display: 'flex',
+      flexDirection: 'column',
+      background: '#ffffff',
+      borderRadius: 'var(--glass-radius-md)',
+      overflow: 'hidden',
+      minHeight: 0,
+    }}>
       <div style={{
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
-        gap: '8px',
+        gap: '6px',
         overflowY: 'auto',
-        padding: '4px 2px',
+        padding: '8px',
         minHeight: 0,
       }}>
         {messages && messages.length > 0 ? messages.map((msg, i) => (
@@ -184,7 +200,7 @@ export const LiquidGlassOverlay: React.FC<OverlayProps> = ({ visible, configurat
             <div style={{ color: '#cc3b2e', fontSize: '14px', fontWeight: '600', textAlign: 'center' }}>
               Connection Error
             </div>
-            <div style={{ color: '#666', fontSize: '12px', textAlign: 'center', lineHeight: 1.4 }}>
+            <div style={{ color: '#555', fontSize: '12px', textAlign: 'center', lineHeight: 1.4 }}>
               {chatError}
             </div>
             <button
@@ -202,7 +218,7 @@ export const LiquidGlassOverlay: React.FC<OverlayProps> = ({ visible, configurat
             <div style={{ color: '#1c1c1e', fontSize: '14px', fontWeight: '600', textAlign: 'center' }}>
               Initializing AI...
             </div>
-            <div style={{ color: '#8e8e93', fontSize: '12px', textAlign: 'center' }}>
+            <div style={{ color: '#666', fontSize: '12px', textAlign: 'center' }}>
               Connecting to MindGate AI
             </div>
           </div>
@@ -210,9 +226,9 @@ export const LiquidGlassOverlay: React.FC<OverlayProps> = ({ visible, configurat
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="glass-divider" />
+      <div className="glass-divider" style={{ margin: '0 8px' }} />
 
-      <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
+      <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-end', padding: '8px' }}>
         <textarea
           ref={inputRef}
           value={userInput}
@@ -226,19 +242,19 @@ export const LiquidGlassOverlay: React.FC<OverlayProps> = ({ visible, configurat
           placeholder="Explain why you need access..."
           className="glass-input"
           disabled={isInputDisabled}
-          rows={2}
-          style={{ resize: 'none', flex: 1, minHeight: '40px', maxHeight: '80px' }}
+          rows={1}
+          style={{ resize: 'none', flex: 1, minHeight: '36px', maxHeight: '60px', fontSize: '13px' }}
         />
         <button
           onClick={handleSubmit}
           disabled={!userInput.trim() || isInputDisabled || !!chatError}
           className="glass-btn"
-          style={{ height: '40px', padding: '0 16px', flexShrink: 0 }}
+          style={{ height: '36px', padding: '0 14px', flexShrink: 0, fontSize: '13px' }}
         >
           Send
         </button>
       </div>
-    </>
+    </div>
   );
 
   const renderApproved = () => (

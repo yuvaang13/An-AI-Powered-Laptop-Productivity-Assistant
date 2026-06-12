@@ -332,10 +332,11 @@ function setupEventHandlers() {
       windowManager.setTargetWindow(activeWindow);
 
       console.log('[Main] Calling showOverlay — overlayWindow exists:', !!overlayWindow);
-      windowManager.showOverlay(activeWindow);
+      windowManager.showOverlay();
       console.log('[Main] Sending show-overlay to renderer');
       if (overlayWindow && !overlayWindow.isDestroyed()) {
         overlayWindow.webContents.send('show-overlay');
+        overlayWindow.webContents.executeJavaScript('window.__showOverlay && window.__showOverlay()').catch(() => {});
       }
     } catch (e) {
       console.error('[Main] Error in onDistractionDetected:', e);

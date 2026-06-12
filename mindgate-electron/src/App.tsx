@@ -3,6 +3,13 @@ import { Configuration } from './types';
 import './styles/glassmorphism.css';
 import { LiquidGlassOverlay } from './components/overlay/Overlay';
 
+declare global {
+  interface Window {
+    __showOverlay?: () => void;
+    __hideOverlay?: () => void;
+  }
+}
+
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
   constructor(props: { children: React.ReactNode }) {
     super(props);
@@ -80,7 +87,17 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    console.log('[App] Registering IPC listeners');
+    console.log('[App] Registering IPC listeners and globals');
+
+    window.__showOverlay = () => {
+      console.log('[App] __showOverlay called');
+      setIsOverlayVisible(true);
+    };
+    window.__hideOverlay = () => {
+      console.log('[App] __hideOverlay called');
+      setIsOverlayVisible(false);
+    };
+
     try {
       window.mindgateAPI.onShowOverlay(() => {
         console.log('[App] show-overlay callback fired');
@@ -99,6 +116,17 @@ const App: React.FC = () => {
     } catch (e) {
       console.error('[App] Failed to register listeners:', e);
     }
+
+    const autoShow = setTimeout(() => {
+      console.log('[App] Auto-showing overlay (backup timer)');
+      setIsOverlayVisible(true);
+    }, 8000);
+
+    return () => {
+      clearTimeout(autoShow);
+      delete window.__showOverlay;
+      delete window.__hideOverlay;
+    };
   }, []);
 
   const handleClose = () => {
