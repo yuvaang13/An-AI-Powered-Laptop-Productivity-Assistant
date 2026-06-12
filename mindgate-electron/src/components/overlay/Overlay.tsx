@@ -21,7 +21,7 @@ export const LiquidGlassOverlay = forwardRef<OverlayHandle, OverlayProps>(({ con
   const [state, setState] = useState<OverlayState>('chat');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [userInput, setUserInput] = useState('');
-  const [countdownSeconds, setCountdownSeconds] = useState(configuration.settings.justificationCountdownDuration);
+  const [countdownSeconds, setCountdownSeconds] = useState(configuration?.settings?.justificationCountdownDuration ?? 20);
   const [remainingAccessTime, setRemainingAccessTime] = useState<number | null>(null);
   const [aiResponse, setAiResponse] = useState('');
   const [isInputDisabled, setIsInputDisabled] = useState(false);
@@ -112,7 +112,7 @@ export const LiquidGlassOverlay = forwardRef<OverlayHandle, OverlayProps>(({ con
       setAiReady(false);
       setChatError(null);
       setIsRetrying(false);
-      setCountdownSeconds(configuration.settings.justificationCountdownDuration);
+      setCountdownSeconds(configuration?.settings?.justificationCountdownDuration ?? 20);
       await initChat();
     },
   }), [configuration]);
@@ -148,14 +148,16 @@ export const LiquidGlassOverlay = forwardRef<OverlayHandle, OverlayProps>(({ con
   const handleTimeout = async () => {
     setIsInputDisabled(true);
     setMessages((prev) => [...prev, { role: 'ai', content: "Time's up! Access denied.", timestamp: Date.now() }]);
-    await window.mindgateAPI.closeDistraction();
+    if (window.mindgateAPI) {
+      await window.mindgateAPI.closeDistraction();
+    }
     setTimeout(() => {
       setState('takeover');
     }, 1000);
   };
 
   const handleSubmit = async () => {
-    if (!userInput.trim() || isInputDisabled) return;
+    if (!userInput.trim() || isInputDisabled || !window.mindgateAPI) return;
 
     const input = userInput.trim();
     setUserInput('');
@@ -195,7 +197,7 @@ export const LiquidGlassOverlay = forwardRef<OverlayHandle, OverlayProps>(({ con
   };
 
   const handleCountdownStyle = () => {
-    const total = configuration.settings.justificationCountdownDuration;
+    const total = configuration?.settings?.justificationCountdownDuration ?? 20;
     const ratio = countdownSeconds / total;
     if (ratio > 0.5) return { color: 'rgba(255, 159, 10, 0.8)' };
     if (ratio > 0.25) return { color: 'rgba(255, 69, 58, 0.8)' };
@@ -337,8 +339,8 @@ export const LiquidGlassOverlay = forwardRef<OverlayHandle, OverlayProps>(({ con
         gap: '10px',
         top: 0,
         left: 0,
-        width: `${configuration.theme.dimensions.overlayWidth}px`,
-        height: `${configuration.theme.dimensions.overlayHeight}px`,
+        width: `${configuration?.theme?.dimensions?.overlayWidth ?? 280}px`,
+        height: `${configuration?.theme?.dimensions?.overlayHeight ?? 280}px`,
         padding: '18px',
         pointerEvents: 'auto',
         zIndex: 2147483647,
