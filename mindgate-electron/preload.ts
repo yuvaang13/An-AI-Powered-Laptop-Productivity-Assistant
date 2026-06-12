@@ -46,6 +46,7 @@ contextBridge.exposeInMainWorld('mindgateAPI', {
       launchURL: (url: string) => ipcRenderer.invoke('launch-url', url),
       launchApp: (appName: string) => ipcRenderer.invoke('launch-app', appName),
       debugShowOverlay: () => ipcRenderer.invoke('debug-show-overlay'),
+      getAvailableModels: () => ipcRenderer.invoke('get-available-models'),
 
   onShowOverlay: (callback: () => void) => {
     console.log('[Preload] onShowOverlay called, pending:', pendingShow);
@@ -90,6 +91,7 @@ declare global {
       launchURL: (url: string) => void;
       launchApp: (appName: string) => void;
       debugShowOverlay: () => Promise<boolean>;
+      getAvailableModels: () => Promise<string[]>;
       onShowOverlay: (callback: () => void) => void;
       onHideOverlay: (callback: () => void) => void;
       onOllamaStatusChanged: (callback: (connected: boolean) => void) => void;

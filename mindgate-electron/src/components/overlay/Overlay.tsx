@@ -21,12 +21,28 @@ export const LiquidGlassOverlay: React.FC<OverlayProps> = ({ visible, configurat
   const [aiResponse, setAiResponse] = useState('');
   const [isInputDisabled, setIsInputDisabled] = useState(false);
   const [aiReady, setAiReady] = useState(false);
+  const [chatError, setChatError] = useState<string | null>(null);
+  const [isRetrying, setIsRetrying] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleRetry = async () => {
+    setIsRetrying(true);
+    setChatError(null);
+    setMessages([]);
+    try {
+      await initChat();
+    } catch (e) {
+      const errorMsg = e instanceof Error ? e.message : 'Unknown error';
+      setChatError(`Failed to start AI chat: ${errorMsg}. Click Retry to try again.`);
+    } finally {
+      setIsRetrying(false);
+    }
   };
 
   useEffect(() => {
@@ -42,20 +58,26 @@ export const LiquidGlassOverlay: React.FC<OverlayProps> = ({ visible, configurat
       setRemainingAccessTime(null);
       setIsInputDisabled(false);
       setAiReady(false);
+      setChatError(null);
+      setIsRetrying(false);
       setCountdownSeconds(configuration.settings.justificationCountdownDuration);
       initChat().catch(e => {
         console.error('[Overlay] initChat failed:', e);
-        setMessages([{ role: 'ai', content: 'Error starting chat. Please restart MindGate.', timestamp: Date.now() }]);
-        setAiReady(true);
+        const errorMsg = e instanceof Error ? e.message : 'Unknown error';
+        setChatError(`Failed to start AI chat: ${errorMsg}. Click Retry to try again.`);
       });
     }
   }, [visible]);
 
   const initChat = async () => {
+    console.log('[Overlay] initChat — starting');
     window.mindgateAPI.resetChat();
+    console.log('[Overlay] initChat — calling generateFirstMessage');
     const firstMessage = await window.mindgateAPI.generateFirstMessage();
+    console.log('[Overlay] initChat — generateFirstMessage returned:', firstMessage.slice(0, 80));
     setMessages([{ role: 'ai', content: firstMessage, timestamp: Date.now() }]);
     setAiReady(true);
+    console.log('[Overlay] initChat — done, aiReady=true');
   };
 
   useEffect(() => {
@@ -157,7 +179,21 @@ export const LiquidGlassOverlay: React.FC<OverlayProps> = ({ visible, configurat
           <div key={i} className={msg?.role === 'user' ? 'glass-bubble-user' : 'glass-bubble-ai-light'}>
             {msg?.content ?? ''}
           </div>
-        )) : (
+        )) : chatError ? (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', padding: '20px' }}>
+            <div style={{ color: 'rgba(255,59,48,0.8)', fontSize: '13px', textAlign: 'center' }}>
+              {chatError}
+            </div>
+            <button
+              onClick={handleRetry}
+              disabled={isRetrying}
+              className="glass-btn"
+              style={{ padding: '8px 20px', fontSize: '13px' }}
+            >
+              {isRetrying ? 'Retrying...' : 'Retry'}
+            </button>
+          </div>
+        ) : (
           <div style={{ color: 'rgba(0,0,0,0.4)', fontSize: '13px', textAlign: 'center', padding: '20px' }}>
             AI is thinking...
           </div>
@@ -186,7 +222,7 @@ export const LiquidGlassOverlay: React.FC<OverlayProps> = ({ visible, configurat
         />
         <button
           onClick={handleSubmit}
-          disabled={!userInput.trim() || isInputDisabled}
+          disabled={!userInput.trim() || isInputDisabled || !!chatError}
           className="glass-btn"
           style={{ height: '40px', padding: '0 16px', flexShrink: 0 }}
         >

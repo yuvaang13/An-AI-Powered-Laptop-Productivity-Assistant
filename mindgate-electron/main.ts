@@ -217,6 +217,10 @@ function setupIPC() {
     }
   });
 
+  ipcMain.handle('get-available-models', async () => {
+    return await decisionEngine.getAvailableModels();
+  });
+
   ipcMain.handle('get-configuration', () => {
     return configurationService.getConfiguration();
   });

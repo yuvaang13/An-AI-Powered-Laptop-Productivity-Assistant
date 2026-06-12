@@ -24,6 +24,10 @@ export class DecisionEngine {
     return this.ollamaService.checkConnection();
   }
 
+  async getAvailableModels(): Promise<string[]> {
+    return this.ollamaService.getAvailableModels();
+  }
+
   private getDistractionContext(): string {
     if (!this.currentApp) return 'Accessing a distracting website or app';
     const parts: string[] = [];

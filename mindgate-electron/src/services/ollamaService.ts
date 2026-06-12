@@ -13,6 +13,26 @@ export class OllamaService {
 
   async checkConnection(): Promise<boolean> {
     try {
+      const tagsOk = await this.checkTagsEndpoint();
+      if (!tagsOk) return false;
+      const modelExists = await this.checkModelExists();
+      if (!modelExists) {
+        const fallback = await this.getBestAvailableModel();
+        if (fallback) {
+          console.log('[Ollama] Falling back to model:', fallback);
+          this.model = fallback;
+        }
+        return fallback !== null;
+      }
+      return true;
+    } catch (error) {
+      console.error('[Ollama] Connection check failed:', error);
+      return false;
+    }
+  }
+
+  private async checkTagsEndpoint(): Promise<boolean> {
+    try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 5000);
       const response = await fetch(`${this.baseURL.replace('/api/generate', '/api/tags')}`, {
@@ -20,15 +40,59 @@ export class OllamaService {
         signal: controller.signal
       });
       clearTimeout(timeout);
-      const isSuccess = response.ok;
-      if (isSuccess) {
+      if (response.ok) {
         this.retryCount = 0;
       }
-      return isSuccess;
-    } catch (error) {
-      console.error('Ollama connection failed:', error);
+      return response.ok;
+    } catch {
       return false;
     }
+  }
+
+  private async checkModelExists(): Promise<boolean> {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+      const response = await fetch(`${this.baseURL.replace('/api/generate', '/api/tags')}`, {
+        method: 'GET',
+        signal: controller.signal
+      });
+      clearTimeout(timeout);
+      if (!response.ok) return false;
+      const data = await response.json() as { models?: Array<{ name: string }> };
+      const models = data.models || [];
+      return models.some(m => m.name === this.model || m.name.startsWith(this.model.split(':')[0]));
+    } catch {
+      return false;
+    }
+  }
+
+  async getAvailableModels(): Promise<string[]> {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+      const response = await fetch(`${this.baseURL.replace('/api/generate', '/api/tags')}`, {
+        method: 'GET',
+        signal: controller.signal
+      });
+      clearTimeout(timeout);
+      if (!response.ok) return [];
+      const data = await response.json() as { models?: Array<{ name: string }> };
+      return (data.models || []).map(m => m.name);
+    } catch {
+      return [];
+    }
+  }
+
+  async getBestAvailableModel(): Promise<string | null> {
+    const models = await this.getAvailableModels();
+    if (models.length === 0) return null;
+    const preferred = ['gemma3', 'llama3', 'llama', 'mistral', 'mixtral', 'phi', 'qwen', 'mathstral'];
+    for (const name of preferred) {
+      const match = models.find(m => m.toLowerCase().startsWith(name));
+      if (match) return match;
+    }
+    return models[0];
   }
 
   private getRetryDelay(): number {
@@ -37,7 +101,7 @@ export class OllamaService {
 
   async waitForConnection(timeoutMs: number = 30000): Promise<boolean> {
     const startTime = Date.now();
-    
+
     while (Date.now() - startTime < timeoutMs) {
       if (await this.checkConnection()) {
         this.retryCount = 0;
@@ -98,13 +162,14 @@ export class OllamaService {
     }
   }
 
-  async generateRawResponse(prompt: string, _maxRetries: number = 3): Promise<string> {
+  async generateRawResponse(prompt: string, _maxRetries: number = 2): Promise<string> {
     let lastError: Error | null = null;
-    
+
     for (let attempt = 0; attempt < _maxRetries; attempt++) {
       try {
+        console.log(`[Ollama] generateRawResponse attempt ${attempt + 1}/${_maxRetries}`);
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 30000);
+        const timeout = setTimeout(() => controller.abort(), 15000);
         const response = await fetch(this.baseURL, {
           method: 'POST',
           headers: {
@@ -124,14 +189,18 @@ export class OllamaService {
         clearTimeout(timeout);
 
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          const body = await response.text().catch(() => '');
+          throw new Error(`HTTP ${response.status}: ${body.slice(0, 200)}`);
         }
 
         const data = await response.json();
         this.retryCount = 0;
-        return (data.response || '').trim();
+        const result = (data.response || '').trim();
+        console.log(`[Ollama] generateRawResponse succeeded, ${result.length} chars`);
+        return result;
       } catch (error) {
         lastError = error instanceof Error ? error : new Error('Unknown error');
+        console.warn(`[Ollama] Attempt ${attempt + 1} failed:`, lastError.message);
         if (attempt < _maxRetries - 1) {
           this.retryCount++;
           const delay = this.getRetryDelay();
@@ -139,8 +208,8 @@ export class OllamaService {
         }
       }
     }
-    
-    console.error('Ollama raw request failed after retries:', lastError);
+
+    console.error('[Ollama] generateRawResponse failed after all retries:', lastError);
     throw lastError;
   }
 
