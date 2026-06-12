@@ -87,6 +87,8 @@ const App: React.FC = () => {
   const pendingShowRef = useRef(false);
 
   useEffect(() => {
+    if (!window.mindgateAPI) return;
+
     window.__showOverlay = () => {
       if (overlayRef.current) {
         void overlayRef.current.resetChat();
@@ -121,7 +123,7 @@ const App: React.FC = () => {
   });
 
   const handleClose = () => {
-    void window.mindgateAPI.hideOverlay();
+    void window.mindgateAPI?.hideOverlay();
   };
 
   const cfg = configuration ?? defaultConfig;
