@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Tray, screen, Menu, nativeImage, systemPreferences, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, Tray, screen, Menu, nativeImage, systemPreferences, shell, protocol, net } from 'electron';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { writeFileSync, mkdtempSync } from 'node:fs';
@@ -9,6 +9,10 @@ import { WorkspaceMonitor } from './src/services/workspaceMonitor.js';
 import { WindowManager } from './src/services/windowManager.js';
 import { SystemMonitor } from './src/services/platformWrapper.js';
 import type { ActiveWindowInfo, Configuration } from './src/types.js';
+
+protocol.registerSchemesAsPrivileged([
+  { scheme: 'app', privileges: { standard: true, secure: true, supportFetchAPI: true } }
+]);
 
 for (const stream of [process.stdout, process.stderr]) {
   stream.on('error', (err: NodeJS.ErrnoException) => {
@@ -150,11 +154,21 @@ async function createWindows(): Promise<void> {
     setTimeout(() => reject(new Error('Overlay window load timed out after 15s')), 15000);
   });
 
+  console.log('Registering app:// protocol handler for production');
+  if (!process.env.VITE_DEV_SERVER_URL) {
+    protocol.handle('app', (request) => {
+      const reqPath = request.url.slice('app://'.length);
+      const filePath = join(__dirname, 'dist', reqPath || 'index.html');
+      console.log('[Protocol] Serving:', filePath);
+      return net.fetch('file://' + filePath);
+    });
+  }
+
   console.log('Loading overlay window with VITE_DEV_SERVER_URL:', process.env.VITE_DEV_SERVER_URL);
   if (process.env.VITE_DEV_SERVER_URL) {
     overlayWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
   } else {
-    overlayWindow.loadFile(join(__dirname, 'dist/index.html'));
+    overlayWindow.loadURL('app://index.html');
   }
 
   try {

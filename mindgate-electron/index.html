@@ -16,6 +16,15 @@
       #mg-splash .title { font-size: 16px; font-weight: 600; }
       #mg-splash .sub { font-size: 13px; color: #8e8e93; }
       #mg-splash.hidden { display: none; }
+      #mg-error {
+        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+        background: #ffffff; color: #cc3b2e; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        padding: 24px; text-align: center; font-size: 13px; line-height: 1.5; z-index: 2147483647;
+        box-sizing: border-box;
+      }
+      #mg-error strong { font-size: 15px; }
+      #mg-error .detail { color: #666; font-size: 12px; }
     </style>
   </head>
   <body style="margin: 0; padding: 0; background: #ffffff; overflow: hidden;">
@@ -24,13 +33,36 @@
       <div class="title">MindGate</div>
       <div class="sub">Loading...</div>
     </div>
+    <div id="mg-error">
+      <strong>MindGate Error</strong>
+      <div id="mg-error-msg">A loading error occurred.</div>
+      <div class="detail">Restart the app. If the issue persists, check the console for details.</div>
+    </div>
     <div id="root"></div>
     <script>
       const splash = document.getElementById('mg-splash');
+      const errorDiv = document.getElementById('mg-error');
+      const errorMsg = document.getElementById('mg-error-msg');
+
+      window.addEventListener('error', (e) => {
+        splash.style.display = 'none';
+        errorDiv.style.display = 'flex';
+        errorMsg.textContent = e.message || 'Script failed to load.';
+        e.preventDefault();
+      }, true);
+
+      window.addEventListener('unhandledrejection', (e) => {
+        splash.style.display = 'none';
+        errorDiv.style.display = 'flex';
+        errorMsg.textContent = e.reason?.message || 'Unhandled promise rejection.';
+        e.preventDefault();
+      });
+
       const observer = new MutationObserver(() => {
         const root = document.getElementById('root');
         if (root && root.children.length > 0) {
           splash.classList.add('hidden');
+          errorDiv.style.display = 'none';
           observer.disconnect();
         }
       });
