@@ -162,14 +162,14 @@ export class OllamaService {
     }
   }
 
-  async generateRawResponse(prompt: string, _maxRetries: number = 2): Promise<string> {
+  async generateRawResponse(prompt: string, _maxRetries: number = 1): Promise<string> {
     let lastError: Error | null = null;
 
     for (let attempt = 0; attempt < _maxRetries; attempt++) {
       try {
         console.log(`[Ollama] generateRawResponse attempt ${attempt + 1}/${_maxRetries}`);
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 15000);
+        const timeout = setTimeout(() => controller.abort(), 8000);
         const response = await fetch(this.baseURL, {
           method: 'POST',
           headers: {

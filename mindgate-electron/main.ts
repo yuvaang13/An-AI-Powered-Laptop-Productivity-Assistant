@@ -95,6 +95,11 @@ async function initialize() {
   setupEventHandlers();
   createTray();
 
+  const permGranted = await requestAccessibilityPermissionsIfNeeded();
+  if (!permGranted) {
+    console.log('Accessibility permission not granted — some features may be limited');
+  }
+
   isOllamaConnected = await decisionEngine.checkOllamaConnection();
   if (!isOllamaConnected) {
     tray?.setTitle('⚠️');
@@ -325,15 +330,7 @@ function setupEventHandlers() {
       console.log('Distraction detected:', activeWindow.processName, activeWindow.windowTitle);
       decisionEngine.setCurrentApp(activeWindow);
       windowManager.setTargetWindow(activeWindow);
-      
-      if (!hasRequestedPermissions) {
-        const hasPermission = await requestAccessibilityPermissionsIfNeeded();
-        hasRequestedPermissions = true;
-        if (!hasPermission) {
-          console.log('Accessibility permission not granted — proceeding without AX API');
-        }
-      }
-      
+
       console.log('[Main] Calling showOverlay — overlayWindow exists:', !!overlayWindow);
       windowManager.showOverlay(activeWindow);
       console.log('[Main] Sending show-overlay to renderer');

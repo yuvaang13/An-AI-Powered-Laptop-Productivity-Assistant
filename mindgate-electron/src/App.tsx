@@ -43,7 +43,7 @@ const defaultConfig: Configuration = {
     accessDurationLabels: ['5 Mins', '10 Mins', '15 Mins'],
     productiveTasks: [],
     productiveApps: [],
-    justificationCountdownDuration: 60,
+    justificationCountdownDuration: 20,
   },
   theme: {
     colors: { primary: '#FFF', secondary: '#FFFFFFB3', accent: '#FFFFFF99', background: '#000', surface: '#000', text: '#FFF', textSecondary: '#FFFFFFB3', error: '#FF453A', warning: '#FF9F0A' },
@@ -52,10 +52,17 @@ const defaultConfig: Configuration = {
   },
 };
 
+const permissionMessages = [
+  'MindGate needs Accessibility access to detect your active window and help you stay focused.',
+  'Please grant permission in System Settings > Privacy & Security > Accessibility.',
+  'After granting, restart MindGate for full functionality.'
+];
+
 const App: React.FC = () => {
   const [configuration, setConfiguration] = useState<Configuration | null>(null);
   const [isOverlayVisible, setIsOverlayVisible] = useState(false);
   const [isOllamaConnected, setIsOllamaConnected] = useState(true);
+  const [hasPermission, setHasPermission] = useState(true);
 
   useEffect(() => {
     console.log('[App] Mounted — requesting configuration');
@@ -64,6 +71,11 @@ const App: React.FC = () => {
       setConfiguration(cfg);
     }).catch(e => {
       console.error('[App] getConfiguration failed:', e);
+    });
+
+    window.mindgateAPI.checkAccessibilityPermission().then(granted => {
+      console.log('[App] Accessibility permission:', granted);
+      setHasPermission(granted);
     });
   }, []);
 
@@ -98,10 +110,27 @@ const App: React.FC = () => {
 
   return (
     <ErrorBoundary>
-      {!isOllamaConnected && (
+      {!hasPermission && (
         <div style={{
           position: 'fixed',
           top: '12px',
+          right: '12px',
+          background: 'rgba(255, 69, 58, 0.9)',
+          color: 'white',
+          padding: '8px 14px',
+          borderRadius: '10px',
+          fontSize: '12px',
+          zIndex: 2147483647,
+          maxWidth: '240px',
+          lineHeight: 1.4,
+        }}>
+          {permissionMessages.map((msg, i) => <div key={i}>{msg}</div>)}
+        </div>
+      )}
+      {!isOllamaConnected && (
+        <div style={{
+          position: 'fixed',
+          top: hasPermission ? '12px' : '96px',
           right: '12px',
           background: 'rgba(255, 69, 58, 0.9)',
           color: 'white',

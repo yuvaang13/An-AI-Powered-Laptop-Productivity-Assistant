@@ -181,7 +181,10 @@ export const LiquidGlassOverlay: React.FC<OverlayProps> = ({ visible, configurat
           </div>
         )) : chatError ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', padding: '20px' }}>
-            <div style={{ color: 'rgba(255,59,48,0.8)', fontSize: '13px', textAlign: 'center' }}>
+            <div style={{ color: '#cc3b2e', fontSize: '14px', fontWeight: '600', textAlign: 'center' }}>
+              Connection Error
+            </div>
+            <div style={{ color: '#666', fontSize: '12px', textAlign: 'center', lineHeight: 1.4 }}>
               {chatError}
             </div>
             <button
@@ -194,8 +197,14 @@ export const LiquidGlassOverlay: React.FC<OverlayProps> = ({ visible, configurat
             </button>
           </div>
         ) : (
-          <div style={{ color: 'rgba(0,0,0,0.4)', fontSize: '13px', textAlign: 'center', padding: '20px' }}>
-            AI is thinking...
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', padding: '20px' }}>
+            <div className="glass-dot" style={{ width: '10px', height: '10px' }} />
+            <div style={{ color: '#1c1c1e', fontSize: '14px', fontWeight: '600', textAlign: 'center' }}>
+              Initializing AI...
+            </div>
+            <div style={{ color: '#8e8e93', fontSize: '12px', textAlign: 'center' }}>
+              Connecting to MindGate AI
+            </div>
           </div>
         )}
         <div ref={messagesEndRef} />
