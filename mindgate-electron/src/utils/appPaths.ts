@@ -16,11 +16,8 @@ export function getRendererIndexPath(): string {
 }
 
 export function getTrayIconPath(): string {
-  // Use PNG for tray icon - SVG may not work reliably on all platforms
-  if (process.platform === 'darwin') {
-    return join(getAppRoot(), 'assets', 'tray-icon-mac.png');
-  }
-  return join(getAppRoot(), 'assets', 'tray-icon.svg');
+  // Use brain icon - SVG for minimalist appearance
+  return join(getAppRoot(), 'assets', 'tray-icon-brain.svg');
 }
 
 /** Resolve __dirname equivalent for ESM modules in the main process. */
