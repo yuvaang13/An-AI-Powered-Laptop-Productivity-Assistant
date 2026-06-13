@@ -56,6 +56,7 @@ let ollamaStatusInterval: NodeJS.Timeout | null = null;
 
 let isOllamaConnected: boolean = false;
 let hasRequestedPermissions: boolean = false;
+let isQuitting: boolean = false;
 
 function getDefaultConfiguration(): Configuration {
   return {
@@ -205,11 +206,13 @@ async function createWindows(): Promise<void> {
       nodeIntegration: false,
       webSecurity: false,
     },
-  });
+});
 
   overlayWindow.on('close', (event) => {
-    event.preventDefault();
-    overlayWindow?.hide();
+    if (!isQuitting) {
+      event.preventDefault();
+      overlayWindow?.hide();
+    }
   });
 
   windowManager.setOverlayWindow(overlayWindow);
@@ -473,11 +476,32 @@ app.whenReady().then(async () => {
 });
 
 app.on('will-quit', () => {
+  dbg('[Main] will-quit triggered');
+  isQuitting = true;
   if (ollamaStatusInterval) {
     clearInterval(ollamaStatusInterval);
     ollamaStatusInterval = null;
   }
   workspaceMonitor?.stopMonitoring();
+  if (overlayWindow && !overlayWindow.isDestroyed()) {
+    overlayWindow.destroy();
+  }
+  if (settingsWindow && !settingsWindow.isDestroyed()) {
+    settingsWindow.destroy();
+  }
+  tray?.destroy();
+  tray = null;
+});
+
+// Ensure Electron quits on SIGTERM/SIGINT for proper cleanup
+process.on('SIGTERM', () => {
+  dbg('[Main] Received SIGTERM, quitting app');
+  app.quit();
+});
+
+process.on('SIGINT', () => {
+  dbg('[Main] Received SIGINT, quitting app');
+  app.quit();
 });
 
 app.on('activate', () => {
