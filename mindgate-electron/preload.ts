@@ -18,6 +18,9 @@ contextBridge.exposeInMainWorld('mindgateAPI', {
   checkAccessibilityPermission: () => ipcRenderer.invoke('check-accessibility-permission'),
   requestAccessibilityPermission: () => ipcRenderer.invoke('request-accessibility-permission'),
   getAvailableModels: () => ipcRenderer.invoke('get-available-models'),
+  launchURL: (url: string) => ipcRenderer.invoke('launch-url', url),
+  launchApp: (appName: string) => ipcRenderer.invoke('launch-app', appName),
+  debugShowOverlay: () => ipcRenderer.invoke('debug-show-overlay'),
 
   onOllamaStatusChanged: (callback: (connected: boolean) => void) => {
     const handler = (_event: IpcRendererEvent, connected: boolean) => callback(connected);
@@ -49,6 +52,9 @@ declare global {
       getRemainingAccessTime: () => Promise<number>;
       checkAccessibilityPermission: () => Promise<boolean>;
       requestAccessibilityPermission: () => Promise<boolean>;
+      launchURL: (url: string) => Promise<void>;
+      launchApp: (appName: string) => Promise<void>;
+      debugShowOverlay: () => Promise<boolean>;
       getAvailableModels: () => Promise<string[]>;
       onOllamaStatusChanged: (callback: (connected: boolean) => void) => () => void;
     };

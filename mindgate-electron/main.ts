@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Tray, screen, Menu, nativeImage, systemPreferences } from 'electron';
+import { app, BrowserWindow, ipcMain, Tray, screen, Menu, nativeImage, systemPreferences, shell } from 'electron';
 import { join } from 'path';
 import { appendFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -394,6 +394,26 @@ function setupIPC() {
   ipcMain.handle('get-remaining-access-time', () => {
     if (!decisionEngine) return 0;
     return decisionEngine.getRemainingTime();
+  });
+
+  ipcMain.handle('launch-url', async (_event, url: string) => {
+    try {
+      await shell.openExternal(url);
+    } catch (err) {
+      console.error('Failed to open URL:', err);
+    }
+  });
+
+  ipcMain.handle('launch-app', async (_event, appName: string) => {
+    try {
+      const appPath = join('/Applications', `${appName}.app`);
+      await shell.openPath(appPath);
+    } catch (err) {
+      console.error('Failed to launch app:', err);
+      try {
+        await shell.openExternal('https://www.google.com');
+      } catch {}
+    }
   });
 
   ollamaStatusInterval = setInterval(async () => {

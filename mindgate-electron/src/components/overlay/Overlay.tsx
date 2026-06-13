@@ -8,7 +8,7 @@ export interface OverlayHandle {
 }
 
 interface OverlayProps {
-  configuration: Configuration;
+  configuration: Configuration | null;
   onClose: () => void;
 }
 

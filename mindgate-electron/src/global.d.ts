@@ -21,6 +21,9 @@ declare global {
       getRemainingAccessTime: () => Promise<number>;
       checkAccessibilityPermission: () => Promise<boolean>;
       requestAccessibilityPermission: () => Promise<boolean>;
+      launchURL: (url: string) => Promise<void>;
+      launchApp: (appName: string) => Promise<void>;
+      debugShowOverlay: () => Promise<boolean>;
       getAvailableModels: () => Promise<string[]>;
       onOllamaStatusChanged: (callback: (connected: boolean) => void) => () => void;
     };
